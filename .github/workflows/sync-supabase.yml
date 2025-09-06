@@ -1,0 +1,48 @@
+name: Sync Game Data to Supabase
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allow manual trigger
+  push:
+    paths:
+      - '*.json' # Trigger on JSON file changes
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Sync data to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          FUNCTION_SECRET: ${{ secrets.FUNCTION_SECRET }}
+        run: |
+          response=$(curl -X POST "$SUPABASE_URL/functions/v1/sync-game-data" \
+            -H "Authorization: Bearer $FUNCTION_SECRET" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            -w "\n%{http_code}")
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n-1)
+          
+          echo "Response: $body"
+          echo "HTTP Code: $http_code"
+          
+          if [ "$http_code" != "200" ]; then
+            echo "Sync failed with HTTP code $http_code"
+            exit 1
+          fi
+      
+      - name: Create sync report
+        if: success()
+        run: echo "✅ Data synced successfully at $(date)" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Report failure
+        if: failure()
+        run: echo "❌ Sync failed at $(date)" >> $GITHUB_STEP_SUMMARY
