@@ -22,9 +22,9 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           FUNCTION_SECRET: ${{ secrets.FUNCTION_SECRET }}
         run: |
-          response=$(curl -X POST "$SUPABASE_URL/functions/v1/sync-game-data" \
-            -H "Authorization: Bearer $FUNCTION_SECRET" \
-            -H "Content-Type: application/json" \
+          response=$(curl -L -X POST 'https://ctnrvppybmljpkvjiyqv.supabase.co/functions/v1/sync-game-data' \
+            -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0bnJ2cHB5Ym1sanBrdmppeXF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNTIzNTcsImV4cCI6MjA3MjcyODM1N30.6nup6eXs88jx2VDGYDNZAV-dGdxw8bzmY3u6QnbjURg' \
+            -H 'Content-Type: application/json' \
             -d '{}' \
             -w "\n%{http_code}")
           
