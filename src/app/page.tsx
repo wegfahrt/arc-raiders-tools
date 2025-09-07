@@ -1,6 +1,7 @@
-import Link from "next/link";
 import { getAllItems } from "~/server/db/queries/select";
 import Image from "next/image";
+
+export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
   const items = await getAllItems();
