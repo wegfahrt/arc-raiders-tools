@@ -12,7 +12,7 @@ export default async function HomePage() {
         </h1>
         {items.map((item) => (
           <div key={item.id}>
-          <Image src={item.imageUrl ? item.imageUrl : "/placeholder.png"} alt={item.name} width={32} height={32} />
+          <Image src={item.imageUrl ?? "/placeholder.png"} alt={item.name} width={32} height={32} />
           </div>
         ))}
         
