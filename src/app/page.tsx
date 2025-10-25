@@ -1,23 +1,15 @@
-import { getAllItems } from "~/server/db/queries/select";
-import Image from "next/image";
+import { HeroSection } from "~/app/_dashboard/HeroSection";
+import { ActiveMissions } from "~/app/_dashboard/ActiveMissions";
+import { DashboardPanels } from "~/app/_dashboard/DashboardPanels";
 
-export const dynamic = 'force-dynamic';
-
-export default async function HomePage() {
-  const items = await getAllItems();
+export default function Dashboard() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-      <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-        <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
-          Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
-        </h1>
-        {items.map((item) => (
-          <div key={item.id}>
-          <Image src={item.imageUrl ?? "/placeholder.png"} alt={item.name} width={32} height={32} />
-          </div>
-        ))}
-        
+    <div className="min-h-screen">
+      <HeroSection />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <ActiveMissions />
+        <DashboardPanels />
       </div>
-    </main>
+    </div>
   );
 }
