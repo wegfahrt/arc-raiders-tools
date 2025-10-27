@@ -1,49 +1,48 @@
 @import "tailwindcss";
 
 @theme {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 13.71% 0.0360 258.54;
+    --foreground: 98.38% 0.0036 248.57;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 13.71% 0.0360 258.54;
+    --card-foreground: 98.38% 0.0036 248.57;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 13.71% 0.0360 258.54;
+    --popover-foreground: 98.38% 0.0036 248.57;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 98.38% 0.0036 248.57;
+    --primary-foreground: 20.79% 0.0399 265.74;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 28.00% 0.0370 259.99;
+    --secondary-foreground: 98.38% 0.0036 248.57;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 28.00% 0.0370 259.99;
+    --muted-foreground: 71.07% 0.0352 256.83;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 28.00% 0.0370 259.99;
+    --accent-foreground: 98.38% 0.0036 248.57;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 39.59% 0.1331 25.70;
+    --destructive-foreground: 98.38% 0.0036 248.57;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 28.00% 0.0370 259.99;
+    --input: 28.00% 0.0370 259.99;
+    --ring: 86.88% 0.0199 252.94;
+    
+    --sidebar-background: 21.03% 0.0059 285.83;
+    --sidebar-foreground: 96.76% 0.0014 285.23;
+    --sidebar-primary: 48.78% 0.2171 264.40;
+    --sidebar-primary-foreground: 100.00% 0.0001 271.15;
+    --sidebar-accent: 27.41% 0.0055 285.96;
+    --sidebar-accent-foreground: 96.76% 0.0014 285.23;
+    --sidebar-border: 27.41% 0.0055 285.96;
+    --sidebar-ring: 62.32% 0.1880 259.81;
 }
-
 body {
-    @apply bg-[hsl(var(--background))] text-[hsl(var(--foreground))];
+    @apply bg-[oklch(var(--background))] text-[oklch(var(--foreground))];
     font-family: 'Inter', sans-serif;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
-
 

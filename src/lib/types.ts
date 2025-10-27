@@ -15,16 +15,7 @@ export interface Quest {
   prerequisites?: string[];
 }
 
-export interface Item {
-  id: string;
-  name: string;
-  description: string;
-  type: "Ammunition" | "Medical" | "Components" | "Material" | "Weapon Mods" | "Power";
-  rarity?: "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary";
-  value?: number;
-  weightKg?: number;
-  imageFilename?: string;
-}
+
 
 export interface WorkstationLevel {
   level: number;
@@ -85,4 +76,111 @@ export interface MaterialRequirement {
   have: number;
   need: number;
   deficit: number;
+}
+
+// Metaforge Item Types and Interfaces
+
+export interface StatBlock {
+  range: number;
+  damage: number;
+  health?: number;
+  radius: number;
+  shield: number;
+  weight: number;
+  agility: number;
+  arcStun: number;
+  healing: number;
+  stamina: number;
+  stealth: number;
+  useTime: number;
+  duration: number;
+  fireRate: number;
+  stability: number;
+  stackSize: number;
+  damageMult: number;
+  raiderStun: number;
+  weightLimit: number;
+  magazineSize?: number;
+  reducedNoise?: number;
+  shieldCharge: number;
+  backpackSlots: number;
+  quickUseSlots: number;
+  damagePerSecond: number;
+  movementPenalty: number;
+  safePocketSlots: number;
+  damageMitigation: number;
+  healingPerSecond: number;
+  reducedEquipTime: number;
+  staminaPerSecond: number;
+  increasedADSSpeed: number;
+  increasedFireRate: number;
+  reducedReloadTime: number;
+  illuminationRadius?: number;
+  increasedEquipTime?: number;
+  reducedUnequipTime: number;
+  shieldCompatibility: string;
+  increasedUnequipTime?: number;
+  reducedVerticalRecoil: number;
+  increasedBulletVelocity?: number;
+  increasedVerticalRecoil: number;
+  reducedMaxShotDispersion?: number;
+  reducedPerShotDispersion?: number;
+  reducedDurabilityBurnRate: number;
+  reducedRecoilRecoveryTime?: number;
+  increasedRecoilRecoveryTime: number;
+  reducedDispersionRecoveryTime?: number;
+}
+
+export type ItemType = 
+  | "Recyclable"
+  | "Quick Use"
+  | "Misc"
+  | "Refined Material"
+  | "Blueprint"
+  | "Advanced Material"
+  | "Weapon"
+  | "Gadget"
+  | "Topside Material";
+
+export type Rarity = 
+  | "Common"
+  | "Uncommon"
+  | "Rare"
+  | "Epic"
+  | "Legendary";
+
+export interface Item {
+  id: string;
+  name: string;
+  description: string;
+  item_type: ItemType;
+  loadout_slots: string[];
+  icon: string;
+  rarity: Rarity;
+  value: number | null;
+  workbench: string | null;
+  stat_block: StatBlock;
+  flavor_text: string | null;
+  subcategory: string | null;
+  created_at: string;
+  updated_at: string;
+  shield_type: string | null;
+  loot_area: string | null;
+  sources: any | null;
+  ammo_type: string | null;
+  locations: any[];
+}
+
+export interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
+export interface ItemsResponse {
+  data: Item[];
+  pagination: Pagination;
 }

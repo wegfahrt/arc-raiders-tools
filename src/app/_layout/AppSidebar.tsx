@@ -34,7 +34,7 @@ export function AppSidebar() {
   return (
     <aside 
       className={cn(
-        "hidden lg:flex flex-col bg-slate-900/95 backdrop-blur-sm border-r border-cyan-500/20 transition-all duration-300",
+        "hidden fixed z-999 h-full lg:flex flex-col bg-slate-900/95 backdrop-blur-sm border-r border-cyan-500/20 transition-all duration-300",
         collapsed ? "w-20" : "w-64"
       )}
     >

@@ -43,7 +43,7 @@ export const mockQuests: Quest[] = [
   }
 ];
 
-export const mockItems: Item[] = [
+export const mockItems = [
   {
     id: "fabric",
     name: "Fabric",
@@ -245,9 +245,9 @@ export const getQuestById = (id: string): Quest | undefined => {
   return mockQuests.find(q => q.id === id);
 };
 
-export const getItemById = (id: string): Item | undefined => {
-  return mockItems.find(i => i.id === id);
-};
+// export const getItemById = (id: string): Item | undefined => {
+//   return mockItems.find(i => i.id === id);
+// };
 
 export const getWorkstationById = (id: string): Workstation | undefined => {
   return mockWorkstations.find(w => w.id === id);

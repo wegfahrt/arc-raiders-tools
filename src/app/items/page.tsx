@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { fetchAllItems, fetchItems, getAllItems } from "~/server/db/queries/items";
 import { motion } from "framer-motion";
-import { itemsApi } from "@/lib/services/api";
 import { useGameStore } from "@/lib/stores/game-store";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,133 +11,185 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, Grid3x3, List, Star } from "lucide-react";
-import type { Item } from "@/lib/types";
 import Script from "next/script";
+import type { Item } from "~/lib/types";
 
 export default function Items() {
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [rarityFilter, setRarityFilter] = useState<string>("all");
+  const [lootAreaFilter, setLootAreaFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-
-  const { data: items = [] } = useQuery({
-    queryKey: ['items'],
-    queryFn: itemsApi.getAll
-  });
+  const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "value-asc" | "value-desc">("name-asc");
 
   const { trackedItems, toggleTrackedItem } = useGameStore();
 
-  const filteredItems = items.filter(item => {
+  const { data: items, isLoading, error } = useQuery({
+    queryKey: ['items', 'all'],
+    queryFn: fetchAllItems,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  // Get all distinct item types and rarities from items
+  const itemTypes = Array.from(new Set(items?.map(item => item.item_type)));
+  const itemRarities = Array.from(new Set(items?.map(item => item.rarity)));
+  // Get all distinct loot areas from items which are not null or empty strings
+  const lootAreas = Array.from(new Set(items?.map(item => item.loot_area).filter(lootArea => lootArea !== null && lootArea !== "")));
+
+  console.log("Loot Areas:", lootAreas);
+
+  const filteredItems = items?.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === "all" || item.type === typeFilter;
+    const matchesType = typeFilter === "all" || item.item_type === typeFilter;
     const matchesRarity = rarityFilter === "all" || item.rarity === rarityFilter;
-    return matchesSearch && matchesType && matchesRarity;
+    const matchesLootArea = lootAreaFilter === "all" || item.loot_area === lootAreaFilter;
+    return matchesSearch && matchesType && matchesRarity && matchesLootArea;
+  });
+
+  // Sort filtered items
+  const sortedItems = filteredItems?.sort((a, b) => {
+    switch (sortBy) {
+      case "name-asc":
+        return a.name.localeCompare(b.name);
+      case "name-desc":
+        return b.name.localeCompare(a.name);
+      case "value-asc":
+        return (a.value ?? 0) - (b.value ?? 0);
+      case "value-desc":
+        return (b.value ?? 0) - (a.value ?? 0);
+      default:
+        return 0;
+    }
   });
 
   const rarityColors = {
-    Common: "bg-slate-500/20 text-slate-300 border-slate-500/30",
-    Uncommon: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
-    Rare: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-    Epic: "bg-purple-500/20 text-purple-300 border-purple-500/30",
-    Legendary: "bg-orange-500/20 text-orange-300 border-orange-500/30"
+    Common: "bg-[oklch(0.60_0.02_270)]/20 text-[oklch(0.60_0.02_270)] border-[oklch(0.60_0.02_270)]/30",
+    Uncommon: "bg-[oklch(0.92_0.24_130)]/20 text-[oklch(0.92_0.24_130)] border-[oklch(0.92_0.24_130)]/30",
+    Rare: "bg-[oklch(0.91_0.15_195)]/20 text-[oklch(0.91_0.15_195)] border-[oklch(0.91_0.15_195)]/30",
+    Epic: "bg-[oklch(0.65_0.20_290)]/20 text-[oklch(0.65_0.20_290)] border-[oklch(0.65_0.20_290)]/30",
+    Legendary: "bg-[oklch(0.68_0.19_35)]/20 text-[oklch(0.68_0.19_35)] border-[oklch(0.68_0.19_35)]/30"
   };
 
   return (
     <>
-    <Script 
+      <Script 
         src="https://cdn.metaforge.app/arcraiders-tooltips.min.js"
         strategy="afterInteractive"
       />
-    <div className="min-h-screen p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h1 className="text-3xl font-bold text-cyan-400">Items</h1>
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === "grid" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("grid")}
-            >
-              <Grid3x3 size={16} />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("list")}
-            >
-              <List size={16} />
-            </Button>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-            <Input
-              placeholder="Search items..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-slate-900/50 border-cyan-500/20"
-            />
+      <div className="min-h-screen p-4 sm:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h1 className="text-3xl font-bold text-cyan-400">Items</h1>
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === "grid" ? "outline" : "default"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+              >
+                <Grid3x3 size={16} />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "outline" : "default"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+              >
+                <List size={16} />
+              </Button>
+            </div>
           </div>
 
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="bg-slate-900/50 border-cyan-500/20">
-              <SelectValue placeholder="Filter by Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="Ammunition">Ammunition</SelectItem>
-              <SelectItem value="Medical">Medical</SelectItem>
-              <SelectItem value="Components">Components</SelectItem>
-              <SelectItem value="Material">Material</SelectItem>
-              <SelectItem value="Weapon Mods">Weapon Mods</SelectItem>
-              <SelectItem value="Power">Power</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Filters */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+              <Input
+                placeholder="Search items..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-slate-900/50 border-cyan-500/20"
+              />
+            </div>
 
-          <Select value={rarityFilter} onValueChange={setRarityFilter}>
-            <SelectTrigger className="bg-slate-900/50 border-cyan-500/20">
-              <SelectValue placeholder="Filter by Rarity" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Rarities</SelectItem>
-              <SelectItem value="Common">Common</SelectItem>
-              <SelectItem value="Uncommon">Uncommon</SelectItem>
-              <SelectItem value="Rare">Rare</SelectItem>
-              <SelectItem value="Epic">Epic</SelectItem>
-              <SelectItem value="Legendary">Legendary</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="bg-slate-900/50 border-cyan-500/20">
+                <SelectValue placeholder="Filter by Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {itemTypes.map((type) => (
+                  <SelectItem key={type} value={type ?? "unknown"}>{type}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        {/* Results count */}
-        <p className="text-slate-400 text-sm">
-          Showing {filteredItems.length} of {items.length} items
-        </p>
+            <Select value={lootAreaFilter} onValueChange={setLootAreaFilter}>
+              <SelectTrigger className="bg-slate-900/50 border-cyan-500/20">
+                <SelectValue placeholder="Filter by Loot Area" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Loot Areas</SelectItem>
+                {lootAreas.map((lootArea) => (
+                  <SelectItem key={lootArea} value={lootArea ?? "unknown"}>{lootArea}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        {/* Items Grid/List */}
-        <div className={
-          viewMode === "grid" 
-            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-            : "space-y-3"
-        }>
-          {filteredItems.map((item, index) => (
-            <ItemCard 
-              key={item.id} 
-              item={item} 
-              index={index}
-              viewMode={viewMode}
-              isTracked={trackedItems.includes(item.id)}
-              onToggleTrack={() => toggleTrackedItem(item.id)}
-              rarityColors={rarityColors}
-            />
-          ))}
+            <Select value={rarityFilter} onValueChange={setRarityFilter}>
+              <SelectTrigger className="bg-slate-900/50 border-cyan-500/20">
+                <SelectValue placeholder="Filter by Rarity" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Rarities</SelectItem>
+                {itemRarities.map((rarity) => (
+                  <SelectItem key={rarity} value={rarity ?? "unknown"}>{rarity}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Results count and Sort */}
+          <div className="flex justify-between items-center">
+            <p className="text-slate-400 text-sm">
+              Showing {sortedItems?.length} of {items?.length} items
+            </p>
+            
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
+              <SelectTrigger className="w-[180px] bg-slate-900/50 border-cyan-500/20">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                <SelectItem value="value-asc">Value (Low-High)</SelectItem>
+                <SelectItem value="value-desc">Value (High-Low)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Items Grid/List */}
+          <div className={
+            viewMode === "grid" 
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+              : "space-y-3"
+          }>
+            {sortedItems?.map((item, index) => (
+              <ItemCard 
+                key={item.id} 
+                item={item} 
+                index={index}
+                viewMode={viewMode}
+                isTracked={trackedItems.includes(item.id)}
+                onToggleTrack={() => toggleTrackedItem(item.id)}
+                rarityColors={rarityColors}
+              />
+            ))}
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 }
@@ -174,8 +226,8 @@ function ItemCard({
             bg-slate-800/50 rounded-lg flex items-center justify-center border border-cyan-500/10
             ${viewMode === "grid" ? "aspect-square" : "w-16 h-16 flex-shrink-0"}
           `}>
-            {item.imageFilename ? (
-              <img src={item.imageFilename} alt={item.name} className="w-full h-full object-cover rounded-lg" />
+            {item.icon ? (
+              <img src={item.icon} alt={item.name} className="w-full h-full object-cover rounded-lg" />
             ) : (
               <span className="text-slate-600 text-2xl">?</span>
             )}
@@ -206,11 +258,16 @@ function ItemCard({
 
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline" className="text-xs border-cyan-500/30 text-cyan-400">
-                {item.type}
+                {item.item_type}
               </Badge>
               {item.rarity && (
                 <Badge className={`text-xs ${rarityColors[item.rarity]}`}>
                   {item.rarity}
+                </Badge>
+              )}
+              {item.loot_area && (
+                <Badge variant="outline" className="text-xs bg-[oklch(0.85_0.17_85)]/20 text-[oklch(0.85_0.17_85)] border-[oklch(0.85_0.17_85)]/30">
+                  {item.loot_area}
                 </Badge>
               )}
             </div>
