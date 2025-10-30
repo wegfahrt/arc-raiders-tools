@@ -2,31 +2,53 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { questsApi, workstationsApi } from "@/lib/services/api";
-import { getItemById } from "@/lib/data/mock-data";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Calculator as CalcIcon, Download, Save, ChevronDown, Plus, X, Package } from "lucide-react";
+import { Calculator as CalcIcon, Download, Save, ChevronDown, Plus, X, Package, Search } from "lucide-react";
 import type { RequirementItem } from "@/lib/types";
+import { getAllQuests } from "~/server/db/queries/quests";
+import { getAllHideoutModules} from "~/server/db/queries/workstations";
+import { fetchAllItems } from "~/server/db/queries/items";
 
 export default function Calculator() {
   const [selectedQuests, setSelectedQuests] = useState<string[]>([]);
   const [selectedUpgrades, setSelectedUpgrades] = useState<string[]>([]);
   const [customMaterials, setCustomMaterials] = useState<RequirementItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: quests = [] } = useQuery({
+  const { data: quests = [], isLoading: isLoadingQuests } = useQuery({
     queryKey: ['quests'],
-    queryFn: questsApi.getAll
+    queryFn: getAllQuests
   });
 
-  const { data: workstations = [] } = useQuery({
+  const { data: workstations = [], isLoading: isLoadingWorkstations } = useQuery({
     queryKey: ['workstations'],
-    queryFn: workstationsApi.getAll
+    queryFn: getAllHideoutModules
   });
+
+  const { data: allItems = [], isLoading: isLoadingItems } = useQuery({
+    queryKey: ['items'],
+    queryFn: fetchAllItems,
+    staleTime: 1000 * 60 * 10 // 10 minutes
+  });
+
+  if (isLoadingQuests || isLoadingWorkstations || isLoadingItems) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-slate-500">Loading...</p>
+      </div>
+    );
+  }
+
+  // Create a lookup function for items
+  const getItemFromCache = (itemId: string) => {
+    return allItems.find(item => item.id.replaceAll("-", "_") === itemId);
+  };
+
 
   const toggleQuest = (questId: string) => {
     setSelectedQuests(prev => 
@@ -34,6 +56,16 @@ export default function Calculator() {
         ? prev.filter(id => id !== questId)
         : [...prev, questId]
     );
+  };
+
+  const toggleAllQuests = () => {
+    if (selectedQuests.length === quests.length) {
+      // If all selected, deselect all
+      setSelectedQuests([]);
+    } else {
+      // Select all
+      setSelectedQuests(quests.map(q => q.id));
+    }
   };
 
   const toggleUpgrade = (upgradeId: string) => {
@@ -44,6 +76,21 @@ export default function Calculator() {
     );
   };
 
+  const toggleAllUpgrades = () => {
+    // Get all possible upgrade IDs
+    const allUpgradeIds = workstations.flatMap(ws => 
+      ws.levels.map((level, idx) => `${ws.id}-level-${idx}`)
+    );
+
+    if (selectedUpgrades.length === allUpgradeIds.length) {
+      // If all selected, deselect all
+      setSelectedUpgrades([]);
+    } else {
+      // Select all
+      setSelectedUpgrades(allUpgradeIds);
+    }
+  };
+
   // Calculate total materials needed
   const calculateMaterials = () => {
     const materials: Record<string, { itemId: string; category: string; quantity: number }> = {};
@@ -51,10 +98,10 @@ export default function Calculator() {
     // helper: ensure a material entry exists and return it
     const ensureMaterial = (itemId: string, fallbackCategory?: string) => {
       if (!materials[itemId]) {
-        const item = getItemById(itemId);
+        const item = getItemFromCache(itemId); // Fixed: use cache instead of async getItemById
         materials[itemId] = {
           itemId,
-          category: item?.type ?? (fallbackCategory ?? "Unknown"),
+          category: item?.item_type ?? (fallbackCategory ?? "Unknown"),
           quantity: 0
         };
       }
@@ -64,7 +111,8 @@ export default function Calculator() {
     // Add quest requirements
     selectedQuests.forEach(questId => {
       const quest = quests.find(q => q.id === questId);
-      quest?.requiredItemIds?.forEach(req => {
+      // Fixed: Add type annotation to req parameter
+      quest?.requirements?.forEach((req: { itemId: string; quantity: number }) => {
         if (!req?.itemId) return; // defensive
         const mat = ensureMaterial(req.itemId);
         mat.quantity += req.quantity ?? 0;
@@ -78,7 +126,9 @@ export default function Calculator() {
       const level = parseInt(levelStr ?? "0", 10);
       const levelData = workstation?.levels?.[level]; // safer indexing
       
-      levelData?.requirementItemIds?.forEach(req => {
+      // Fixed: Iterate over requirements array, not the level object itself
+      // Fixed: Add type annotation to req parameter
+      levelData?.requirements?.forEach((req: { itemId: string; quantity: number }) => {
         if (!req?.itemId) return; // defensive
         const mat = ensureMaterial(req.itemId);
         mat.quantity += req.quantity ?? 0;
@@ -109,6 +159,25 @@ export default function Calculator() {
   };
 
   const materialsByCategory = calculateMaterials();
+  
+  // Filter materials by search query
+  const filteredMaterialsByCategory = Object.entries(materialsByCategory).reduce((acc, [category, materials]) => {
+    const filteredMaterials = Object.values(materials).filter(mat => {
+      const item = getItemFromCache(mat.itemId);
+      const itemName = item?.name || mat.itemId;
+      return itemName.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+    
+    if (filteredMaterials.length > 0) {
+      acc[category] = filteredMaterials.reduce((matAcc, mat) => {
+        matAcc[mat.itemId] = mat;
+        return matAcc;
+      }, {} as Record<string, { itemId: string; category: string; quantity: number }>);
+    }
+    
+    return acc;
+  }, {} as Record<string, Record<string, { itemId: string; category: string; quantity: number }>>);
+  
   const hasSelections = selectedQuests.length > 0 || selectedUpgrades.length > 0 || customMaterials.length > 0;
 
   return (
@@ -121,13 +190,23 @@ export default function Calculator() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Panel - Selections */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 space-y-6 ">
             {/* Quests */}
             <Card className="bg-slate-900/50 border-cyan-500/20 p-6">
-              <h2 className="text-lg font-semibold text-cyan-300 mb-4">Select Quests</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-cyan-300">Select Quests</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleAllQuests}
+                  className="text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                >
+                  {selectedQuests.length === quests.length ? 'Deselect All' : 'Select All'}
+                </Button>
+              </div>
               <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
                 {quests.map(quest => (
-                  <div key={quest.id} className="flex items-start gap-3 p-2 rounded hover:bg-slate-800/50">
+                  <div key={quest.id} className="flex items-center gap-3 p-2 rounded bg-[oklch(var(--card-light))] hover:bg-slate-800/50">
                     <Checkbox
                       checked={selectedQuests.includes(quest.id)}
                       onCheckedChange={() => toggleQuest(quest.id)}
@@ -144,7 +223,17 @@ export default function Calculator() {
 
             {/* Workstation Upgrades */}
             <Card className="bg-slate-900/50 border-cyan-500/20 p-6">
-              <h2 className="text-lg font-semibold text-cyan-300 mb-4">Select Upgrades</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-cyan-300">Select Upgrades</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleAllUpgrades}
+                  className="text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                >
+                  {selectedUpgrades.length === workstations.flatMap(ws => ws.levels).length ? 'Deselect All' : 'Select All'}
+                </Button>
+              </div>
               <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
                 {workstations.map(ws => (
                   <Collapsible key={ws.id}>
@@ -225,21 +314,30 @@ export default function Calculator() {
             <Card className="bg-slate-900/50 border-cyan-500/20 p-6 min-h-[600px]">
               {hasSelections ? (
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <h2 className="text-xl font-semibold text-cyan-300">Required Materials</h2>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="gap-2">
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <div className="relative flex-1 sm:flex-initial sm:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                        <Input
+                          placeholder="Search materials..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-10 bg-slate-900/50 border-cyan-500/20"
+                        />
+                      </div>
+                      <Button variant="outline" size="sm" className="gap-2 flex-shrink-0">
                         <Download size={16} />
                         Export
                       </Button>
-                      <Button variant="outline" size="sm" className="gap-2">
+                      <Button variant="outline" size="sm" className="gap-2 flex-shrink-0">
                         <Save size={16} />
                         Save
                       </Button>
                     </div>
                   </div>
 
-                  {Object.entries(materialsByCategory).map(([category, materials]) => (
+                  {Object.entries(filteredMaterialsByCategory).map(([category, materials]) => (
                     <Collapsible key={category} defaultOpen>
                       <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded bg-slate-800/50 hover:bg-slate-800 transition-colors">
                         <span className="font-medium text-cyan-400">{category}</span>
@@ -247,12 +345,13 @@ export default function Calculator() {
                       </CollapsibleTrigger>
                       <CollapsibleContent className="mt-2 space-y-2">
                         {Object.values(materials).map(mat => {
-                          const item = getItemById(mat.itemId);
+                          const item = getItemFromCache(mat.itemId);
                           const have = 0; // Would come from inventory
                           const deficit = Math.max(0, mat.quantity - have);
 
                           return (
-                            <div key={mat.itemId} className="flex items-center justify-between p-3 rounded bg-slate-800/30">
+                            <div key={mat.itemId} className="flex items-center justify-between p-3 rounded bg-slate-800/30 gap-2">
+                              <img src={item?.icon ?? `https://cdn.arctracker.io/items/${mat.itemId}.png`} alt="?" className="w-12 h-12 object-cover rounded-lg text-center" />
                               <div className="flex-1">
                                 <p className="text-slate-300">{item?.name || mat.itemId}</p>
                                 <p className="text-xs text-slate-500">

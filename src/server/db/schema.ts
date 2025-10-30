@@ -1,5 +1,5 @@
 import { pgTable, index, text, jsonb, integer, timestamp, numeric, boolean, foreignKey, primaryKey, pgView, bigint } from "drizzle-orm/pg-core"
-import { sql } from "drizzle-orm"
+import { sql, relations } from "drizzle-orm"
 
 
 
@@ -160,3 +160,46 @@ export const materialUsage = pgView("material_usage", {	id: text(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	totalRequired: bigint("total_required", { mode: "number" }),
 }).as(sql`SELECT i.id, i.name, i.type, COALESCE(qr.quest_required, 0::bigint) AS quest_required, COALESCE(hr.hideout_required, 0::bigint) AS hideout_required, COALESCE(qr.quest_required, 0::bigint) + COALESCE(hr.hideout_required, 0::bigint) AS total_required FROM items i LEFT JOIN ( SELECT quest_requirements.item_id, sum(quest_requirements.quantity) AS quest_required FROM quest_requirements GROUP BY quest_requirements.item_id) qr ON i.id = qr.item_id LEFT JOIN ( SELECT hideout_requirements.item_id, sum(hideout_requirements.quantity) AS hideout_required FROM hideout_requirements GROUP BY hideout_requirements.item_id) hr ON i.id = hr.item_id WHERE qr.quest_required > 0 OR hr.hideout_required > 0`);
+
+// Define relations
+export const questsRelations = relations(quests, ({ many }) => ({
+  requirements: many(questRequirements),
+}));
+
+export const questRequirementsRelations = relations(questRequirements, ({ one }) => ({
+  quest: one(quests, {
+    fields: [questRequirements.questId],
+    references: [quests.id],
+  }),
+  item: one(items, {
+    fields: [questRequirements.itemId],
+    references: [items.id],
+  }),
+}));
+
+export const itemsRelations = relations(items, ({ many }) => ({
+  questRequirements: many(questRequirements),
+}));
+
+export const hideoutModulesRelations = relations(hideoutModules, ({ many }) => ({
+	levels: many(hideoutLevels),
+}));
+
+export const hideoutLevelsRelations = relations(hideoutLevels, ({ one, many }) => ({
+  module: one(hideoutModules, {
+    fields: [hideoutLevels.moduleId],
+    references: [hideoutModules.id],
+  }),
+  requirements: many(hideoutRequirements),
+}));
+
+export const hideoutRequirementsRelations = relations(hideoutRequirements, ({ one }) => ({
+  level: one(hideoutLevels, {
+    fields: [hideoutRequirements.moduleId, hideoutRequirements.level],
+    references: [hideoutLevels.moduleId, hideoutLevels.level],
+  }),
+  item: one(items, {
+    fields: [hideoutRequirements.itemId],
+    references: [items.id],
+  }),
+}));

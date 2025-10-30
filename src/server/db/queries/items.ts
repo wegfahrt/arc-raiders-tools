@@ -1,12 +1,20 @@
 'use server';
 
-import { asc } from 'drizzle-orm';
+import { asc, eq, gt } from 'drizzle-orm';
 import { db } from '../index';
-import { items } from '../schema';
+import { items, materialUsage } from '../schema';
 import type { Item, ItemsResponse } from '~/lib/types';
 
 export async function getAllItems(){
   return db.select().from(items).orderBy(asc(items.name));
+}
+
+export async function getItemById(id: string){
+  return db.select().from(items).where(eq(items.id, id)).limit(1);
+}
+
+export async function getQuestItems() {
+  return db.select().from(materialUsage).where(gt(materialUsage.questRequired, 0));
 }
 
 export async function fetchItems(page: number = 1, limit: number = 50): Promise<ItemsResponse> {

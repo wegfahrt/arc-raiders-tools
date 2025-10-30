@@ -27,7 +27,7 @@ export default function Items() {
   const { data: items, isLoading, error } = useQuery({
     queryKey: ['items', 'all'],
     queryFn: fetchAllItems,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
   });
 
   if (isLoading) return <div>Loading...</div>;

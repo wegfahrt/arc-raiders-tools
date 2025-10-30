@@ -18,13 +18,13 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 
 const navItems = [
-  { path: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { path: "/quests", icon: ScrollText, label: "Quests" },
+  { path: "/", icon: LayoutDashboard, label: "Dashboard", soon: true },
+  { path: "/quests", icon: ScrollText, label: "Quests", soon: true },
   { path: "/items", icon: Package, label: "Items" },
-  { path: "/workstations", icon: Hammer, label: "Workstations" },
+  { path: "/workstations", icon: Hammer, label: "Workstations", soon: true },
   { path: "/calculator", icon: Calculator, label: "Calculator" },
   { path: "/maps", icon: Map, label: "Maps", soon: true },
-  { path: "/guides", icon: BookOpen, label: "Guides" },
+  { path: "/guides", icon: BookOpen, label: "Guides", soon: true},
 ];
 
 export function AppSidebar() {

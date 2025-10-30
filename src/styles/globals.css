@@ -5,6 +5,7 @@
     --foreground: 98.38% 0.0036 248.57;
 
     --card: 13.71% 0.0360 258.54;
+    --card-light: 15.71% 0.0360 258.54;
     --card-foreground: 98.38% 0.0036 248.57;
 
     --popover: 13.71% 0.0360 258.54;
@@ -44,5 +45,30 @@ body {
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+@layer components {
+  .custom-scrollbar {
+    &::-webkit-scrollbar {
+      @apply w-2;
+    }
+    
+    &::-webkit-scrollbar-track {
+      @apply bg-slate-800/50 rounded-full;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      @apply bg-cyan-500/50 rounded-full border border-slate-700;
+      
+      &:hover {
+        @apply bg-cyan-500/70;
+      }
+    }
+  }
+  
+  /* Firefox support */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: theme(colors.cyan.500 / 0.5) theme(colors.slate.800 / 0.5);
+  }
 }
 
