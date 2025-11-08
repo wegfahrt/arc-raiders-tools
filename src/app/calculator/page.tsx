@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -8,9 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Calculator as CalcIcon, Download, Save, ChevronDown, Plus, X, Package, Search, Check, ChevronsUpDown } from "lucide-react";
+import { Calculator as CalcIcon, Download, Save, ChevronDown, Plus, X, Package, Search, Check, ChevronsUpDown, FolderOpen, Trash2 } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import type { RequirementItem } from "@/lib/types";
 import { getAllQuests } from "~/server/db/queries/quests";
@@ -21,6 +24,16 @@ import { getLocalizedText } from "~/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { ItemTooltip } from "~/components/ui/item-tooltip";
 
+interface SavedCalculation {
+  id: string;
+  name: string;
+  timestamp: number;
+  selectedQuests: string[];
+  selectedUpgrades: string[];
+  selectedProjectPhases: string[];
+  customMaterials: RequirementItem[];
+}
+
 export default function Calculator() {
   const [selectedQuests, setSelectedQuests] = useState<string[]>([]);
   const [selectedUpgrades, setSelectedUpgrades] = useState<string[]>([]);
@@ -28,6 +41,13 @@ export default function Calculator() {
   const [customMaterials, setCustomMaterials] = useState<RequirementItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [openComboboxIndex, setOpenComboboxIndex] = useState<number | null>(null);
+  const [savedCalculations, setSavedCalculations] = useState<SavedCalculation[]>([]);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [loadTargetId, setLoadTargetId] = useState<string | null>(null);
 
   const { data: quests = [], isLoading: isLoadingQuests } = useQuery({
     queryKey: ['quests'],
@@ -52,6 +72,38 @@ export default function Calculator() {
     queryFn: getAllProjects,
     staleTime: 1000 * 60 * 10 // 10 minutes
   });
+
+  // Load saved calculations from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('arc-calculator-saves');
+      if (saved) {
+        const parsed = JSON.parse(saved) as SavedCalculation[];
+        // Validate that saved calculations have valid structure
+        const validated = parsed.filter(calc => 
+          calc.id && 
+          calc.name && 
+          Array.isArray(calc.selectedQuests) &&
+          Array.isArray(calc.selectedUpgrades) &&
+          Array.isArray(calc.selectedProjectPhases) &&
+          Array.isArray(calc.customMaterials)
+        );
+        setSavedCalculations(validated);
+      }
+    } catch (error) {
+      console.error('Failed to load saved calculations:', error);
+    }
+  }, []);
+
+  // Track unsaved changes
+  useEffect(() => {
+    setHasUnsavedChanges(
+      selectedQuests.length > 0 || 
+      selectedUpgrades.length > 0 || 
+      selectedProjectPhases.length > 0 || 
+      customMaterials.length > 0
+    );
+  }, [selectedQuests, selectedUpgrades, selectedProjectPhases, customMaterials]);
 
   if (isLoadingQuests || isLoadingWorkstations || isLoadingItems || isLoadingProjects) {
     return (
@@ -128,6 +180,127 @@ export default function Calculator() {
       // Select all
       setSelectedProjectPhases(allPhaseIds);
     }
+  };
+
+  // Validate that selected items still exist in the data
+  const validateSavedCalculation = (calc: SavedCalculation): boolean => {
+    const validQuests = calc.selectedQuests.filter(id => 
+      quests.some(q => q.id === id)
+    );
+    const validUpgrades = calc.selectedUpgrades.filter(id => {
+      const [wsId] = id.split('-level-');
+      return workstations.some(ws => ws.id === wsId);
+    });
+    const validPhases = calc.selectedProjectPhases.filter(id => {
+      const [projId] = id.split('-phase-');
+      return allProjects.some(p => p.id === projId);
+    });
+    const validMaterials = calc.customMaterials.filter(mat => 
+      allItems.some(item => item.id === mat.itemId)
+    );
+
+    // Return true if at least some data is valid
+    return validQuests.length > 0 || 
+           validUpgrades.length > 0 || 
+           validPhases.length > 0 || 
+           validMaterials.length > 0;
+  };
+
+  // Save current state
+  const saveCalculation = () => {
+    if (!saveName.trim()) {
+      return;
+    }
+
+    const newSave: SavedCalculation = {
+      id: crypto.randomUUID(),
+      name: saveName.trim(),
+      timestamp: Date.now(),
+      selectedQuests,
+      selectedUpgrades,
+      selectedProjectPhases,
+      customMaterials
+    };
+
+    try {
+      const updated = [...savedCalculations, newSave];
+      setSavedCalculations(updated);
+      localStorage.setItem('arc-calculator-saves', JSON.stringify(updated));
+      setSaveDialogOpen(false);
+      setSaveName("");
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      console.error('Failed to save calculation:', error);
+      alert('Failed to save calculation. Storage may be full.');
+    }
+  };
+
+  // Load a saved calculation
+  const loadCalculation = (calc: SavedCalculation) => {
+    if (!validateSavedCalculation(calc)) {
+      alert('This saved calculation contains items that no longer exist and cannot be loaded.');
+      return;
+    }
+
+    // Filter out any items that no longer exist
+    const validQuests = calc.selectedQuests.filter(id => 
+      quests.some(q => q.id === id)
+    );
+    const validUpgrades = calc.selectedUpgrades.filter(id => {
+      const [wsId] = id.split('-level-');
+      return workstations.some(ws => ws.id === wsId);
+    });
+    const validPhases = calc.selectedProjectPhases.filter(id => {
+      const [projId] = id.split('-phase-');
+      return allProjects.some(p => p.id === projId);
+    });
+    const validMaterials = calc.customMaterials.filter(mat => 
+      allItems.some(item => item.id === mat.itemId)
+    );
+
+    setSelectedQuests(validQuests);
+    setSelectedUpgrades(validUpgrades);
+    setSelectedProjectPhases(validPhases);
+    setCustomMaterials(validMaterials);
+    setLoadDialogOpen(false);
+    setLoadTargetId(null);
+    setHasUnsavedChanges(false);
+  };
+
+  // Handle load with unsaved changes warning
+  const handleLoadClick = (calcId: string) => {
+    const calc = savedCalculations.find(c => c.id === calcId);
+    if (calc) loadCalculation(calc);
+  };
+
+  // Delete a saved calculation
+  const deleteCalculation = (id: string) => {
+    try {
+      const updated = savedCalculations.filter(s => s.id !== id);
+      setSavedCalculations(updated);
+      localStorage.setItem('arc-calculator-saves', JSON.stringify(updated));
+      setDeleteConfirmId(null);
+    } catch (error) {
+      console.error('Failed to delete calculation:', error);
+    }
+  };
+
+  // Get summary of a saved calculation
+  const getCalculationSummary = (calc: SavedCalculation) => {
+    const parts: string[] = [];
+    if (calc.selectedQuests.length > 0) {
+      parts.push(`${calc.selectedQuests.length} quest${calc.selectedQuests.length !== 1 ? 's' : ''}`);
+    }
+    if (calc.selectedUpgrades.length > 0) {
+      parts.push(`${calc.selectedUpgrades.length} upgrade${calc.selectedUpgrades.length !== 1 ? 's' : ''}`);
+    }
+    if (calc.selectedProjectPhases.length > 0) {
+      parts.push(`${calc.selectedProjectPhases.length} project${calc.selectedProjectPhases.length !== 1 ? 's' : ''}`);
+    }
+    if (calc.customMaterials.length > 0) {
+      parts.push(`${calc.customMaterials.length} custom material${calc.customMaterials.length !== 1 ? 's' : ''}`);
+    }
+    return parts.join(', ') || 'Empty';
   };
 
   // Calculate total materials needed
@@ -470,32 +643,46 @@ export default function Calculator() {
           {/* Right Panel - Results */}
           <div className="lg:col-span-2">
             <Card className="bg-slate-900/50 border-cyan-500/20 p-6 min-h-[600px]">
-              {hasSelections ? (
-                <div className="space-y-6">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <h2 className="text-xl font-semibold text-cyan-300">Required Materials</h2>
-                    <div className="flex gap-2 w-full sm:w-auto">
-                      <div className="relative flex-1 sm:flex-initial sm:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                        <Input
-                          placeholder="Search materials..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-10 bg-slate-900/50 border-cyan-500/20"
-                        />
-                      </div>
-                      <Button variant="outline" size="sm" className="gap-2 flex-shrink-0">
-                        <Download size={16} />
-                        Export
-                      </Button>
-                      <Button variant="outline" size="sm" className="gap-2 flex-shrink-0">
-                        <Save size={16} />
-                        Save
-                      </Button>
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <h2 className="text-xl font-semibold text-cyan-300">Required Materials</h2>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <div className="relative flex-1 sm:flex-initial sm:w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                      <Input
+                        placeholder="Search materials..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10 bg-slate-900/50 border-cyan-500/20"
+                        disabled={!hasSelections}
+                      />
                     </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="gap-2 flex-shrink-0"
+                      onClick={() => setLoadDialogOpen(true)}
+                      disabled={savedCalculations.length === 0}
+                    >
+                      <FolderOpen size={16} />
+                      Load
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="gap-2 flex-shrink-0"
+                      onClick={() => setSaveDialogOpen(true)}
+                      disabled={!hasSelections}
+                    >
+                      <Save size={16} />
+                      Save
+                    </Button>
                   </div>
+                </div>
 
-                  {Object.entries(filteredMaterialsByCategory).map(([category, materials]) => (
+                {hasSelections ? (
+                  <>
+                    {Object.entries(filteredMaterialsByCategory).map(([category, materials]) => (
                     <Collapsible key={category} defaultOpen>
                       <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded bg-slate-800/50 hover:bg-slate-800 transition-colors">
                         <span className="font-medium text-cyan-400">{category}</span>
@@ -552,20 +739,152 @@ export default function Calculator() {
                       </CollapsibleContent>
                     </Collapsible>
                   ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <Package size={64} className="text-slate-600 mb-4" />
-                  <h3 className="text-xl font-semibold text-slate-400 mb-2">No Selections</h3>
-                  <p className="text-slate-500">
-                    Select quests, upgrades, or add custom materials to see the total requirements
-                  </p>
-                </div>
-              )}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-center">
+                    <Package size={64} className="text-slate-600 mb-4" />
+                    <h3 className="text-xl font-semibold text-slate-400 mb-2">No Selections</h3>
+                    <p className="text-slate-500">
+                      Select quests, upgrades, or add custom materials to see the total requirements
+                    </p>
+                  </div>
+                )}
+              </div>
             </Card>
           </div>
         </div>
       </div>
+
+      {/* Save Dialog */}
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent className="bg-slate-900 border-cyan-500/20">
+          <DialogHeader>
+            <DialogTitle className="text-cyan-300">Save Calculation</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Give your calculation a name to save it for later.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="save-name" className="text-slate-300">Name</Label>
+              <Input
+                id="save-name"
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+                placeholder="e.g., Level 5 Hideout Build"
+                className="bg-slate-800/50 border-cyan-500/20"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && saveName.trim()) {
+                    saveCalculation();
+                  }
+                }}
+              />
+            </div>
+            <div className="text-sm text-slate-400 space-y-1">
+              <p className="font-medium">Current selections:</p>
+              <ul className="list-disc list-inside text-xs space-y-0.5">
+                {selectedQuests.length > 0 && <li>{selectedQuests.length} quest{selectedQuests.length !== 1 ? 's' : ''}</li>}
+                {selectedUpgrades.length > 0 && <li>{selectedUpgrades.length} upgrade{selectedUpgrades.length !== 1 ? 's' : ''}</li>}
+                {selectedProjectPhases.length > 0 && <li>{selectedProjectPhases.length} project phase{selectedProjectPhases.length !== 1 ? 's' : ''}</li>}
+                {customMaterials.length > 0 && <li>{customMaterials.length} custom material{customMaterials.length !== 1 ? 's' : ''}</li>}
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSaveDialogOpen(false);
+                setSaveName("");
+              }}
+              className="border-cyan-500/20"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveCalculation}
+              disabled={!saveName.trim()}
+              className="bg-cyan-600 hover:bg-cyan-500"
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Load Dialog */}
+      <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
+        <DialogContent className="bg-slate-900 border-cyan-500/20 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-cyan-300">Load Calculation</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Select a saved calculation to load.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+            {savedCalculations.length === 0 ? (
+              <p className="text-center text-slate-500 py-8">No saved calculations yet.</p>
+            ) : (
+              savedCalculations
+                .sort((a, b) => b.timestamp - a.timestamp)
+                .map((calc) => (
+                  <div
+                    key={calc.id}
+                    className="flex items-center gap-3 p-3 rounded bg-slate-800/50 hover:bg-slate-800 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-slate-300 font-medium truncate">{calc.name}</p>
+                      <p className="text-xs text-slate-500">
+                        {new Date(calc.timestamp).toLocaleDateString()} at{' '}
+                        {new Date(calc.timestamp).toLocaleTimeString()}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">{getCalculationSummary(calc)}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleLoadClick(calc.id)}
+                        className="bg-cyan-600 hover:bg-cyan-500"
+                      >
+                        Load
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setDeleteConfirmId(calc.id)}
+                        className="hover:bg-red-500/10 hover:text-red-400"
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteConfirmId !== null} onOpenChange={() => setDeleteConfirmId(null)}>
+        <AlertDialogContent className="bg-slate-900 border-cyan-500/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-cyan-300">Delete Calculation?</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              Are you sure you want to delete &quot;{savedCalculations.find(c => c.id === deleteConfirmId)?.name}&quot;? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-cyan-500/20">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteConfirmId && deleteCalculation(deleteConfirmId)}
+              className="bg-red-600 hover:bg-red-500"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
