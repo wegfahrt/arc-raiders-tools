@@ -541,10 +541,10 @@ export default function Calculator() {
                           variant="outline"
                           role="combobox"
                           aria-expanded={openComboboxIndex === idx}
-                          className="flex-1 justify-between bg-slate-800/50 border-cyan-500/20 text-sm hover:bg-slate-800"
+                          className="flex-1 justify-between bg-slate-800/50 border-cyan-500/20 text-sm hover:bg-slate-800 min-w-0"
                         >
                           {mat.itemId ? (
-                            <span className="flex items-center gap-2 truncate">
+                            <span className="flex items-center gap-2 min-w-0 flex-1">
                               <img 
                                 src={`https://cdn.arctracker.io/items/${mat.itemId}.png`} 
                                 alt="" 
