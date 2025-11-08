@@ -8,32 +8,40 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Calculator as CalcIcon, Download, Save, ChevronDown, Plus, X, Package, Search } from "lucide-react";
+import { Calculator as CalcIcon, Download, Save, ChevronDown, Plus, X, Package, Search, Check, ChevronsUpDown } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import type { RequirementItem } from "@/lib/types";
 import { getAllQuests } from "~/server/db/queries/quests";
 import { getAllHideoutModules} from "~/server/db/queries/workstations";
-import { fetchAllItems } from "~/server/db/queries/items";
+import { getAllItems } from "~/server/db/queries/items";
 import { getLocalizedText } from "~/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
+import { ItemTooltip } from "~/components/ui/item-tooltip";
 
 export default function Calculator() {
   const [selectedQuests, setSelectedQuests] = useState<string[]>([]);
   const [selectedUpgrades, setSelectedUpgrades] = useState<string[]>([]);
   const [customMaterials, setCustomMaterials] = useState<RequirementItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [openComboboxIndex, setOpenComboboxIndex] = useState<number | null>(null);
 
   const { data: quests = [], isLoading: isLoadingQuests } = useQuery({
     queryKey: ['quests'],
     queryFn: getAllQuests
   });
 
-  const { data: workstations = [], isLoading: isLoadingWorkstations } = useQuery({
+  const { data: allWorkstations = [], isLoading: isLoadingWorkstations } = useQuery({
     queryKey: ['workstations'],
     queryFn: getAllHideoutModules
   });
 
+  const workstations = allWorkstations.filter(ws => ws.id != "workbench" && ws.id != "stash");
+
   const { data: allItems = [], isLoading: isLoadingItems } = useQuery({
     queryKey: ['items'],
-    queryFn: fetchAllItems,
+    queryFn: getAllItems,
     staleTime: 1000 * 60 * 10 // 10 minutes
   });
 
@@ -47,9 +55,8 @@ export default function Calculator() {
 
   // Create a lookup function for items
   const getItemFromCache = (itemId: string) => {
-    return allItems.find(item => item.id.replaceAll("-", "_") === itemId);
+    return allItems.find(item => item.id === itemId);
   };
-
 
   const toggleQuest = (questId: string) => {
     setSelectedQuests(prev => 
@@ -99,10 +106,13 @@ export default function Calculator() {
     // helper: ensure a material entry exists and return it
     const ensureMaterial = (itemId: string, fallbackCategory?: string) => {
       if (!materials[itemId]) {
-        const item = getItemFromCache(itemId); // Fixed: use cache instead of async getItemById
+        const item = getItemFromCache(itemId);
+        // Skip items that don't exist in our filtered list
+        if (!item) return null;
+        
         materials[itemId] = {
           itemId,
-          category: item?.item_type ?? (fallbackCategory ?? "Unknown"),
+          category: item.type ?? (fallbackCategory ?? "Unknown"),
           quantity: 0
         };
       }
@@ -112,11 +122,10 @@ export default function Calculator() {
     // Add quest requirements
     selectedQuests.forEach(questId => {
       const quest = quests.find(q => q.id === questId);
-      // Fixed: Add type annotation to req parameter
       quest?.requirements?.forEach((req: { itemId: string; quantity: number }) => {
-        if (!req?.itemId) return; // defensive
+        if (!req?.itemId) return;
         const mat = ensureMaterial(req.itemId);
-        mat.quantity += req.quantity ?? 0;
+        if (mat) mat.quantity += req.quantity ?? 0;
       });
     });
 
@@ -125,22 +134,20 @@ export default function Calculator() {
       const [workstationId, levelStr] = upgradeId.split('-level-');
       const workstation = workstations.find(w => w.id === workstationId);
       const level = parseInt(levelStr ?? "0", 10);
-      const levelData = workstation?.levels?.[level]; // safer indexing
+      const levelData = workstation?.levels?.[level];
       
-      // Fixed: Iterate over requirements array, not the level object itself
-      // Fixed: Add type annotation to req parameter
       levelData?.requirements?.forEach((req: { itemId: string; quantity: number }) => {
-        if (!req?.itemId) return; // defensive
+        if (!req?.itemId) return;
         const mat = ensureMaterial(req.itemId);
-        mat.quantity += req.quantity ?? 0;
+        if (mat) mat.quantity += req.quantity ?? 0;
       });
     });
 
     // Add custom materials
     customMaterials.forEach(mat => {
-      if (!mat?.itemId) return; // defensive
+      if (!mat?.itemId) return;
       const entry = ensureMaterial(mat.itemId, "Custom");
-      entry.quantity += mat.quantity ?? 0;
+      if (entry) entry.quantity += mat.quantity ?? 0;
     });
 
     // Group by category
@@ -214,7 +221,7 @@ export default function Calculator() {
                       className="mt-0.5"
                     />
                     <div className="flex-1">
-                      <p className="text-sm text-slate-300">{quest.name}</p>
+                      <p className="text-sm text-slate-300">{getLocalizedText(quest.name)}</p>
                       <p className="text-xs text-slate-500">{quest.trader}</p>
                     </div>
                   </div>
@@ -237,8 +244,8 @@ export default function Calculator() {
               </div>
               <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
                 {workstations.map(ws => (
-                  <Collapsible key={ws.id}>
-                    <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded hover:bg-slate-800/50 text-left">
+                  <Collapsible key={ws.id} className="bg-[oklch(var(--card-light))] rounded">
+                    <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded hover:bg-slate-800/50 text-left ">
                       <span className="text-sm text-slate-300">{getLocalizedText(ws.name)}</span>
                       <ChevronDown size={16} className="text-slate-400" />
                     </CollapsibleTrigger>
@@ -267,18 +274,80 @@ export default function Calculator() {
               <div className="space-y-3">
                 {customMaterials.map((mat, idx) => (
                   <div key={idx} className="flex items-center gap-2">
-                    <Input 
-                      value={mat.itemId} 
-                      onChange={(e) => {
-                        // use functional update to avoid indexing into a stale/undefined array
-                        const newValue = e.target.value;
-                        setCustomMaterials(prev => prev.map((m, i) => i === idx ? { ...m, itemId: newValue } : m));
-                      }}
-                      placeholder="Item name"
-                      className="flex-1 bg-slate-800/50 border-cyan-500/20 text-sm"
-                    />
-                    <Input 
-                      type="number" 
+                    <Popover open={openComboboxIndex === idx} onOpenChange={(open) => setOpenComboboxIndex(open ? idx : null)}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openComboboxIndex === idx}
+                          className="flex-1 justify-between bg-slate-800/50 border-cyan-500/20 text-sm hover:bg-slate-800"
+                        >
+                          {mat.itemId ? (
+                            <span className="flex items-center gap-2 truncate">
+                              <img 
+                                src={`https://cdn.arctracker.io/items/${mat.itemId}.png`} 
+                                alt="" 
+                                className="w-6 h-6 object-cover rounded flex-shrink-0"
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                              />
+                              <span className="truncate">
+                                {getLocalizedText(getItemFromCache(mat.itemId)?.name) || mat.itemId}
+                              </span>
+                            </span>
+                          ) : (
+                            "Select item..."
+                          )}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[350px] p-0 bg-slate-900 border-cyan-500/20" align="start">
+                        <Command className="bg-slate-900">
+                          <CommandInput 
+                            placeholder="Search items..." 
+                            className="h-9 border-cyan-500/20" 
+                          />
+                          <CommandList className="max-h-[300px]">
+                            <CommandEmpty>No item found.</CommandEmpty>
+                            <CommandGroup>
+                              {allItems
+                                .sort((a, b) => getLocalizedText(a.name).localeCompare(getLocalizedText(b.name)))
+                                .map((item) => (
+                                  <CommandItem
+                                    key={item.id}
+                                    value={`${item.id}-${getLocalizedText(item.name)}`}
+                                    onSelect={() => {
+                                      setCustomMaterials(prev => 
+                                        prev.map((m, i) => 
+                                          i === idx ? { ...m, itemId: item.id } : m
+                                        )
+                                      );
+                                      setOpenComboboxIndex(null);
+                                    }}
+                                    className="flex items-center gap-2 cursor-pointer hover:bg-slate-800/50"
+                                  >
+                                    <img 
+                                      src={`https://cdn.arctracker.io/items/${item.id}.png`} 
+                                      alt="" 
+                                      className="w-8 h-8 object-cover rounded flex-shrink-0"
+                                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                    />
+                                    <span className="flex-1 truncate">{getLocalizedText(item.name)}</span>
+                                    <Check
+                                      className={cn(
+                                        "h-4 w-4 flex-shrink-0",
+                                        mat.itemId === item.id ? "opacity-100 text-cyan-400" : "opacity-0"
+                                      )}
+                                    />
+                                  </CommandItem>
+                                ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+
+                    <Input
+                      type="number"
                       value={mat.quantity}
                       onChange={(e) => {
                         const qty = parseInt(e.target.value, 10) || 0;
@@ -291,7 +360,7 @@ export default function Calculator() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setCustomMaterials(customMaterials.filter((_, i) => i !== idx))}
-                      className="p-2"
+                      className="p-2 hover:bg-red-500/10 hover:text-red-400"
                     >
                       <X size={16} />
                     </Button>
@@ -351,21 +420,41 @@ export default function Calculator() {
                           const deficit = Math.max(0, mat.quantity - have);
 
                           return (
-                            <div key={mat.itemId} className="flex items-center justify-between p-3 rounded bg-slate-800/30 gap-2">
-                              <img src={`https://cdn.arctracker.io/items/${mat.itemId}.png`} alt="?" className="w-12 h-12 object-cover rounded-lg text-center" />
-                              <div className="flex-1">
-                                <p className="text-slate-300">{getLocalizedText(item?.name) || mat.itemId}</p>
+                            <div key={mat.itemId} className="flex items-center gap-3 p-3 rounded bg-slate-800/30 hover:bg-slate-800/50 transition-colors">
+                              {item && (
+                                <TooltipProvider delayDuration={300}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className={`
+                                        bg-slate-800/50 rounded-lg flex items-center justify-center border border-cyan-500/10
+                                        cursor-pointer hover:border-cyan-500/30 transition-colors w-16 h-16 flex-shrink-0
+                                      `}>
+                                        {item.imageFilename ? (
+                                          <img src={item.imageFilename} alt={getLocalizedText(item.name)} className="w-full h-full object-cover rounded-lg" />
+                                        ) : (
+                                          <span className="text-slate-600 text-2xl">?</span>
+                                        )}
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right" align="start" className="p-0 border-0 bg-transparent">
+                                      <ItemTooltip item={item} />
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-slate-300 font-medium truncate">{getLocalizedText(item?.name) || mat.itemId}</p>
                                 <p className="text-xs text-slate-500">
-                                  Have: {have} / Need: {mat.quantity}
+                                  Have: <span className="text-cyan-400">{have}</span> / Need: <span className="text-slate-400 font-medium">{mat.quantity}</span>
                                 </p>
                               </div>
                               {deficit > 0 && (
-                                <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+                                <Badge className="bg-red-500/20 text-red-400 border-red-500/30 flex-shrink-0">
                                   -{deficit}
                                 </Badge>
                               )}
                               {deficit === 0 && (
-                                <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                                <Badge className="bg-green-500/20 text-green-400 border-green-500/30 flex-shrink-0">
                                   Complete
                                 </Badge>
                               )}

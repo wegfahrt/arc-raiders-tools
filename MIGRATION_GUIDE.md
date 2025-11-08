@@ -19,6 +19,9 @@ The following columns were changed from `text()` to `jsonb()` to support multi-l
 - **hideout_modules table**:
   - `name`: `text()` → `jsonb()`
 
+- **quests table**:
+  - `name`: `text()` → `jsonb()`
+
 - **material_usage view**:
   - `name`: `text()` → `jsonb()`
 
@@ -52,6 +55,7 @@ Updated interfaces to use `string | TranslatedText` for:
 - `Item.name` and `Item.description`
 - `Skill.name` and `Skill.description`
 - `Workstation.name`
+- `Quest.name`
 
 ### 3. Utility Functions (`src/lib/utils.ts`)
 Added `getLocalizedText()` helper function to safely extract translated text:
@@ -72,16 +76,18 @@ This function:
 Added imports for `getLocalizedText` in:
 - `src/server/db/queries/items.ts`
 - `src/server/db/queries/workstations.ts`
+- `src/server/db/queries/quests.ts`
 
 ## Generated Migration
 
-The migration file was automatically generated at:
-**`supabase/migrations/0001_oval_prima.sql`**
+Two migration files were created:
+1. **`supabase/migrations/0001_add_translations.sql`** - Items, skills, and hideout modules
+2. **`supabase/migrations/0002_clammy_dragon_man.sql`** - Quests table
 
-### What the Migration Does:
-1. Alters column types from `text` to `jsonb` for the translated fields
-2. Recreates indexes and constraints that were affected
-3. Updates the `material_usage` view to reflect the new schema
+### What the Migrations Do:
+1. Drop the `material_usage` view (because it depends on items.name)
+2. Alter column types from `text` to `jsonb` for the translated fields using `to_jsonb()` function
+3. Recreate the `material_usage` view with the updated schema
 
 ## How to Apply the Migration
 
@@ -264,12 +270,14 @@ If you encounter any issues:
 - ✅ `src/lib/utils.ts` - Added getLocalizedText helper
 - ✅ `src/server/db/queries/items.ts` - Added helper import
 - ✅ `src/server/db/queries/workstations.ts` - Added helper import
-- ✅ `supabase/migrations/0001_oval_prima.sql` - Generated migration file
+- ✅ `src/server/db/queries/quests.ts` - Added helper import
+- ✅ `supabase/migrations/0001_add_translations.sql` - Migration for items, skills, hideout modules
+- ✅ `supabase/migrations/0002_clammy_dragon_man.sql` - Migration for quests
 
 ## Migration Status
 
-- [ ] Migration generated
-- [ ] Migration reviewed
-- [ ] Migration applied to development database
+- [x] Migrations generated
+- [x] Migrations reviewed
+- [x] Migrations applied to development database
 - [ ] Migration tested
 - [ ] Migration applied to production database

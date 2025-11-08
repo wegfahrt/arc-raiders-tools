@@ -16,48 +16,30 @@ export function ItemTooltip({ item }: ItemTooltipProps) {
 
   const rarityBadgeClass = item.rarity ? rarityColors[item.rarity as keyof typeof rarityColors] : "";
 
-  // Helper function to format camelCase to Title Case
-  const formatStatName = (key: string): string => {
-    return key
-      .replace(/([A-Z])/g, ' $1') // Add space before capital letters
-      .replace(/^./, (str) => str.toUpperCase()) // Capitalize first letter
-      .trim();
-  };
-
-  // Filter valid stats
-  const validStats = item.stat_block 
-    ? Object.entries(item.stat_block).filter(([key, value]) => 
-        value !== 0 && value !== null && value !== undefined && value !== "" && key !== "weight"
-      )
-    : [];
-
   // Check if we have valid footer data
-  const hasWeight = item.stat_block?.weight && item.stat_block.weight !== 0;
+  const hasWeight = item.weightKg && item.weightKg !== 0;
   const hasValue = item.value && item.value !== 0;
   const showFooter = hasWeight || hasValue;
-
-  // console log the results of item with id advanced-electrical-component-recipe
-  console.log("data of advanced-electrical-component-recipe", item.id.includes("angled-grip") ? item : null);
 
   return (
     <div className="w-[280px] bg-[oklch(var(--card-light))] border border-cyan-500/30 rounded-lg overflow-hidden shadow-[0_0_30px_rgba(6,182,212,0.3)]">
       {/* Header with image */}
       <div className="relative bg-gradient-to-b from-slate-800/50 to-transparent p-4">
         <div className="aspect-square w-full rounded-lg bg-slate-800/70 flex items-center justify-center mb-3 border border-cyan-500/20">
-          {item.icon ? (
-            <img src={item.icon} alt={getLocalizedText(item.name)} className="w-full h-full object-cover rounded-lg" />
+          {item.imageFilename ? (
+            <img src={item.imageFilename} alt={getLocalizedText(item.name)} className="w-full h-full object-cover rounded-lg" />
           ) : (
             <span className="text-slate-600 text-6xl">?</span>
           )}
         </div>
         
         {/* Rarity badges */}
-        <div className="flex gap-2 absolute top-2 left-2">
-          {item.loot_area && (
-            <span className={`px-2 py-0.5 text-xs font-medium rounded ${rarityBadgeClass}`}>
-              {item.loot_area}
+        <div className="flex gap-2 absolute top-2 left-2 flex-wrap">
+          {item.foundIn && item.foundIn.split(',').map((location, index) => (
+            <span key={index} className={`px-2 py-0.5 text-xs font-medium rounded ${rarityBadgeClass}`}>
+              {location.trim()}
             </span>
-          )}
+          ))}
           {item.rarity && (
             <span className={`px-2 py-0.5 text-xs font-medium rounded ${rarityBadgeClass}`}>
               {item.rarity}
@@ -81,12 +63,12 @@ export function ItemTooltip({ item }: ItemTooltipProps) {
         )}
 
         {/* Stats section */}
-        {validStats.length > 0 && (
+        {item.effects && (
           <div className="space-y-2 pt-2 border-t border-cyan-500/20">
-            {validStats.map(([key, value]) => (
+            {Object.entries(item.effects).map(([key, value]) => (
               <div key={key} className="flex justify-between items-center text-sm">
-                <span className="text-slate-400 font-medium">{formatStatName(key)}</span>
-                <span className="text-cyan-400 font-semibold tabular-nums">{value}</span>
+                <span className="text-slate-400 font-medium">{getLocalizedText(key)}</span>
+                <span className="text-cyan-400 font-semibold tabular-nums">{value.value}</span>
               </div>
             ))}
           </div>
@@ -98,7 +80,7 @@ export function ItemTooltip({ item }: ItemTooltipProps) {
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-slate-400">⚖️</span>
                 <span className="text-slate-300 font-medium tabular-nums">
-                  {item.stat_block!.weight} KG
+                  {item.weightKg ?? 0} KG
                 </span>
               </div>
 

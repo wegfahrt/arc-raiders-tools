@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchAllItems, fetchItems, getAllItems } from "~/server/db/queries/items";
 import { motion } from "framer-motion";
 import { useGameStore } from "@/lib/stores/game-store";
 import { Card } from "@/components/ui/card";
@@ -13,9 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ItemTooltip } from "@/components/ui/item-tooltip";
 import { Search, Grid3x3, List, Star } from "lucide-react";
-import Script from "next/script";
 import type { Item } from "~/lib/types";
 import { getLocalizedText } from "~/lib/utils";
+import { getAllItems } from "~/server/db/queries/items";
 
 export default function Items() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,7 +28,7 @@ export default function Items() {
 
   const { data: items, isLoading, error } = useQuery({
     queryKey: ['items', 'all'],
-    queryFn: fetchAllItems,
+    queryFn: getAllItems,
     staleTime: 10 * 60 * 1000, // Cache for 10 minutes
   });
 
@@ -37,18 +36,18 @@ export default function Items() {
   if (error) return <div>Error: {error.message}</div>;
 
   // Get all distinct item types and rarities from items
-  const itemTypes = Array.from(new Set(items?.map(item => item.item_type).filter(type => type !== "" && type !== null)));
+  const itemTypes = Array.from(new Set(items?.map(item => item.type).filter(type => type !== "" && type !== null)));
   const itemRarities = Array.from(new Set(items?.map(item => item.rarity).filter(rarity => rarity !== "" && rarity !== null)));
   // Get all distinct loot areas from items which are not null or empty strings
-  const lootAreas = Array.from(new Set(items?.map(item => item.loot_area).filter(lootArea => lootArea !== null && lootArea !== "")));
+  const lootAreas = Array.from(new Set(items?.map(item => item.foundIn).filter(lootArea => lootArea !== null && lootArea !== "")));
 
   console.log("data of advanced-electrical-component", items?.find(i => getLocalizedText(i.description).includes("Lets you craft an Advanced Electrical Component")));
 
   const filteredItems = items?.filter(item => {
     const matchesSearch = getLocalizedText(item.name).toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === "all" || item.item_type === typeFilter;
+    const matchesType = typeFilter === "all" || item.type === typeFilter;
     const matchesRarity = rarityFilter === "all" || item.rarity === rarityFilter;
-    const matchesLootArea = lootAreaFilter === "all" || item.loot_area === lootAreaFilter;
+    const matchesLootArea = lootAreaFilter === "all" || item.foundIn === lootAreaFilter;
     return matchesSearch && matchesType && matchesRarity && matchesLootArea;
   });
 
@@ -230,8 +229,8 @@ function ItemCard({
                   cursor-pointer hover:border-cyan-500/30 transition-colors
                   ${viewMode === "grid" ? "aspect-square" : "w-16 h-16 flex-shrink-0"}
                 `}>
-                  {item.icon ? (
-                    <img src={item.icon} alt={getLocalizedText(item.name)} className="w-full h-full object-cover rounded-lg" />
+                  {item.imageFilename ? (
+                    <img src={item.imageFilename} alt={getLocalizedText(item.name)} className="w-full h-full object-cover rounded-lg" />
                   ) : (
                     <span className="text-slate-600 text-2xl">?</span>
                   )}
@@ -263,16 +262,16 @@ function ItemCard({
             )}
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline" className="text-xs border-cyan-500/30 text-cyan-400">
-                {item.item_type}
+                {item.type}
               </Badge>
               {item.rarity && (
                 <Badge className={`text-xs ${rarityColors[item.rarity]}`}>
                   {item.rarity}
                 </Badge>
               )}
-              {item.loot_area && (
+              {item.foundIn && (
                 <Badge variant="outline" className="text-xs bg-[oklch(0.85_0.17_85)]/20 text-[oklch(0.85_0.17_85)] border-[oklch(0.85_0.17_85)]/30">
-                  {item.loot_area}
+                  {item.foundIn}
                 </Badge>
               )}
             </div>

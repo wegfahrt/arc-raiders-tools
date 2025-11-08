@@ -15,6 +15,13 @@
       "when": 1762588999999,
       "tag": "0001_add_translations",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1762614908013,
+      "tag": "0002_clammy_dragon_man",
+      "breakpoints": true
     }
   ]
 }
