@@ -13,6 +13,7 @@ import type { RequirementItem } from "@/lib/types";
 import { getAllQuests } from "~/server/db/queries/quests";
 import { getAllHideoutModules} from "~/server/db/queries/workstations";
 import { fetchAllItems } from "~/server/db/queries/items";
+import { getLocalizedText } from "~/lib/utils";
 
 export default function Calculator() {
   const [selectedQuests, setSelectedQuests] = useState<string[]>([]);
@@ -165,7 +166,7 @@ export default function Calculator() {
     const filteredMaterials = Object.values(materials).filter(mat => {
       const item = getItemFromCache(mat.itemId);
       const itemName = item?.name || mat.itemId;
-      return itemName.toLowerCase().includes(searchQuery.toLowerCase());
+      return getLocalizedText(itemName).toLowerCase().includes(searchQuery.toLowerCase());
     });
     
     if (filteredMaterials.length > 0) {
@@ -238,7 +239,7 @@ export default function Calculator() {
                 {workstations.map(ws => (
                   <Collapsible key={ws.id}>
                     <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded hover:bg-slate-800/50 text-left">
-                      <span className="text-sm text-slate-300">{ws.name}</span>
+                      <span className="text-sm text-slate-300">{getLocalizedText(ws.name)}</span>
                       <ChevronDown size={16} className="text-slate-400" />
                     </CollapsibleTrigger>
                     <CollapsibleContent className="pl-4 space-y-2 mt-2">
@@ -351,9 +352,9 @@ export default function Calculator() {
 
                           return (
                             <div key={mat.itemId} className="flex items-center justify-between p-3 rounded bg-slate-800/30 gap-2">
-                              <img src={item?.icon ?? `https://cdn.arctracker.io/items/${mat.itemId}.png`} alt="?" className="w-12 h-12 object-cover rounded-lg text-center" />
+                              <img src={`https://cdn.arctracker.io/items/${mat.itemId}.png`} alt="?" className="w-12 h-12 object-cover rounded-lg text-center" />
                               <div className="flex-1">
-                                <p className="text-slate-300">{item?.name || mat.itemId}</p>
+                                <p className="text-slate-300">{getLocalizedText(item?.name) || mat.itemId}</p>
                                 <p className="text-xs text-slate-500">
                                   Have: {have} / Need: {mat.quantity}
                                 </p>

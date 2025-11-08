@@ -10,9 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ItemTooltip } from "@/components/ui/item-tooltip";
 import { Search, Grid3x3, List, Star } from "lucide-react";
 import Script from "next/script";
 import type { Item } from "~/lib/types";
+import { getLocalizedText } from "~/lib/utils";
 
 export default function Items() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,15 +37,15 @@ export default function Items() {
   if (error) return <div>Error: {error.message}</div>;
 
   // Get all distinct item types and rarities from items
-  const itemTypes = Array.from(new Set(items?.map(item => item.item_type)));
-  const itemRarities = Array.from(new Set(items?.map(item => item.rarity)));
+  const itemTypes = Array.from(new Set(items?.map(item => item.item_type).filter(type => type !== "" && type !== null)));
+  const itemRarities = Array.from(new Set(items?.map(item => item.rarity).filter(rarity => rarity !== "" && rarity !== null)));
   // Get all distinct loot areas from items which are not null or empty strings
   const lootAreas = Array.from(new Set(items?.map(item => item.loot_area).filter(lootArea => lootArea !== null && lootArea !== "")));
 
   console.log("Loot Areas:", lootAreas);
 
   const filteredItems = items?.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = getLocalizedText(item.name).toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = typeFilter === "all" || item.item_type === typeFilter;
     const matchesRarity = rarityFilter === "all" || item.rarity === rarityFilter;
     const matchesLootArea = lootAreaFilter === "all" || item.loot_area === lootAreaFilter;
@@ -53,9 +56,9 @@ export default function Items() {
   const sortedItems = filteredItems?.sort((a, b) => {
     switch (sortBy) {
       case "name-asc":
-        return a.name.localeCompare(b.name);
+        return getLocalizedText(a.name).localeCompare(getLocalizedText(b.name));
       case "name-desc":
-        return b.name.localeCompare(a.name);
+        return getLocalizedText(b.name).localeCompare(getLocalizedText(a.name));
       case "value-asc":
         return (a.value ?? 0) - (b.value ?? 0);
       case "value-desc":
@@ -75,10 +78,6 @@ export default function Items() {
 
   return (
     <>
-      <Script 
-        src="https://cdn.metaforge.app/arcraiders-tooltips.min.js"
-        strategy="afterInteractive"
-      />
       <div className="min-h-screen p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
@@ -221,26 +220,31 @@ function ItemCard({
         ${viewMode === "grid" ? "p-4" : "p-4 flex items-center gap-4"}
       `}>
         <div className={viewMode === "grid" ? "space-y-3" : "flex items-center gap-4 flex-1"}>
-          {/* Image placeholder */}
-          <div className={`
-            bg-slate-800/50 rounded-lg flex items-center justify-center border border-cyan-500/10
-            ${viewMode === "grid" ? "aspect-square" : "w-16 h-16 flex-shrink-0"}
-          `}>
-            {item.icon ? (
-              <img src={item.icon} alt={item.name} className="w-full h-full object-cover rounded-lg" />
-            ) : (
-              <span className="text-slate-600 text-2xl">?</span>
-            )}
-          </div>
+          {/* Image with tooltip */}
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className={`
+                  bg-slate-800/50 rounded-lg flex items-center justify-center border border-cyan-500/10
+                  cursor-pointer hover:border-cyan-500/30 transition-colors
+                  ${viewMode === "grid" ? "aspect-square" : "w-16 h-16 flex-shrink-0"}
+                `}>
+                  {item.icon ? (
+                    <img src={item.icon} alt={getLocalizedText(item.name)} className="w-full h-full object-cover rounded-lg" />
+                  ) : (
+                    <span className="text-slate-600 text-2xl">?</span>
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" align="start" className="p-0 border-0 bg-transparent">
+                <ItemTooltip item={item} />
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
           <div className="flex-1 space-y-2">
             <div className="flex items-start justify-between gap-2">
-              <a 
-                href={`https://metaforge.app/arc-raiders/database/item/${item.id}`}
-                className="font-semibold text-cyan-300 hover:text-cyan-200 transition-colors"
-              >
-                {item.name}
-              </a>
+                {getLocalizedText(item.name)}
               <Button
                 variant="ghost"
                 size="sm"
@@ -254,7 +258,7 @@ function ItemCard({
               </Button>
             </div>
 
-            <p className="text-sm text-slate-400 line-clamp-2">{item.description}</p>
+            <p className="text-sm text-slate-400 line-clamp-2">{getLocalizedText(item.description)}</p>
 
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline" className="text-xs border-cyan-500/30 text-cyan-400">

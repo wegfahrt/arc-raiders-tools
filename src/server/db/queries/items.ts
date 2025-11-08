@@ -4,6 +4,7 @@ import { asc, eq, gt } from 'drizzle-orm';
 import { db } from '../index';
 import { items, materialUsage } from '../schema';
 import type { Item, ItemsResponse } from '~/lib/types';
+import { getLocalizedText } from '~/lib/utils';
 
 export async function getAllItems(){
   return db.select().from(items).orderBy(asc(items.name));

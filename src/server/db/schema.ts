@@ -17,8 +17,8 @@ export const quests = pgTable("quests", {
 
 export const items = pgTable("items", {
 	id: text().primaryKey().notNull(),
-	name: text().notNull(),
-	description: text(),
+	name: jsonb().notNull(),
+	description: jsonb(),
 	type: text(),
 	rarity: text(),
 	value: integer(),
@@ -34,8 +34,8 @@ export const items = pgTable("items", {
 
 export const skillNodes = pgTable("skill_nodes", {
 	id: text().primaryKey().notNull(),
-	name: text().notNull(),
-	description: text(),
+	name: jsonb().notNull(),
+	description: jsonb(),
 	category: text(),
 	maxPoints: integer("max_points"),
 	iconUrl: text("icon_url"),
@@ -51,7 +51,7 @@ export const skillNodes = pgTable("skill_nodes", {
 
 export const hideoutModules = pgTable("hideout_modules", {
 	id: text().primaryKey().notNull(),
-	name: text().notNull(),
+	name: jsonb().notNull(),
 	maxLevel: integer("max_level"),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
@@ -151,7 +151,7 @@ export const hideoutRequirements = pgTable("hideout_requirements", {
 	primaryKey({ columns: [table.moduleId, table.level, table.itemId], name: "hideout_requirements_pkey"}),
 ]);
 export const materialUsage = pgView("material_usage", {	id: text(),
-	name: text(),
+	name: jsonb(),
 	type: text(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	questRequired: bigint("quest_required", { mode: "number" }),

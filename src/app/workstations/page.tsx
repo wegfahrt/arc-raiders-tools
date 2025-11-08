@@ -12,6 +12,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Hammer, Check, Lock, ChevronDown, Info } from "lucide-react";
 import { getItemById } from "@/lib/data/mock-data";
+import { getLocalizedText } from "~/lib/utils";
 
 export default function Workstations() {
   const { data: workstations = [] } = useQuery({
@@ -64,7 +65,7 @@ export default function Workstations() {
               return (
                 <div key={ws.id} className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-300">{ws.name}</span>
+                    <span className="text-slate-300">{getLocalizedText(ws.name)}</span>
                     <span className="text-cyan-400">Lvl {current}/{ws.maxLevel}</span>
                   </div>
                   <Progress value={progress} className="h-2" />

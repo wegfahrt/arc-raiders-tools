@@ -1,3 +1,25 @@
+// Multi-language support for translated fields
+export interface TranslatedText {
+  en: string;
+  de?: string;
+  fr?: string;
+  es?: string;
+  pt?: string;
+  pl?: string;
+  no?: string;
+  da?: string;
+  it?: string;
+  ru?: string;
+  ja?: string;
+  "zh-TW"?: string;
+  uk?: string;
+  "zh-CN"?: string;
+  kr?: string;
+  tr?: string;
+  hr?: string;
+  sr?: string;
+}
+
 export interface RequirementItem {
   itemId: string;
   quantity: number;
@@ -26,7 +48,7 @@ export interface WorkstationLevel {
 
 export interface Workstation {
   id: string;
-  name: string;
+  name: string | TranslatedText;
   description?: string;
   maxLevel: number;
   currentLevel?: number;
@@ -35,8 +57,8 @@ export interface Workstation {
 
 export interface Skill {
   id: string;
-  name: string;
-  description: string;
+  name: string | TranslatedText;
+  description: string | TranslatedText;
   impactedSkill: string;
   knownValue: any[];
   category: "CONDITIONING" | "MOBILITY" | "SURVIVAL";
@@ -131,32 +153,16 @@ export interface StatBlock {
   reducedDispersionRecoveryTime?: number;
 }
 
-export type ItemType = 
-  | "Recyclable"
-  | "Quick Use"
-  | "Misc"
-  | "Refined Material"
-  | "Blueprint"
-  | "Advanced Material"
-  | "Weapon"
-  | "Gadget"
-  | "Topside Material";
 
-export type Rarity = 
-  | "Common"
-  | "Uncommon"
-  | "Rare"
-  | "Epic"
-  | "Legendary";
 
 export interface Item {
   id: string;
-  name: string;
-  description: string;
-  item_type: ItemType;
+  name: string | TranslatedText;
+  description: string | TranslatedText;
+  item_type: string;
   loadout_slots: string[];
   icon: string;
-  rarity: Rarity;
+  rarity: string;
   value: number | null;
   workbench: string | null;
   stat_block: StatBlock;
