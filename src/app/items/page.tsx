@@ -42,7 +42,7 @@ export default function Items() {
   // Get all distinct loot areas from items which are not null or empty strings
   const lootAreas = Array.from(new Set(items?.map(item => item.loot_area).filter(lootArea => lootArea !== null && lootArea !== "")));
 
-  console.log("Loot Areas:", lootAreas);
+  console.log("data of advanced-electrical-component", items?.find(i => getLocalizedText(i.description).includes("Lets you craft an Advanced Electrical Component")));
 
   const filteredItems = items?.filter(item => {
     const matchesSearch = getLocalizedText(item.name).toLowerCase().includes(searchQuery.toLowerCase());
@@ -193,6 +193,7 @@ export default function Items() {
   );
 }
 
+
 function ItemCard({ 
   item, 
   index, 
@@ -257,9 +258,9 @@ function ItemCard({
                 />
               </Button>
             </div>
-
-            <p className="text-sm text-slate-400 line-clamp-2">{getLocalizedText(item.description)}</p>
-
+            {viewMode === "list" && (
+              <p className="text-sm text-slate-400 line-clamp-2">{getLocalizedText(item.description)}</p>
+            )}
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline" className="text-xs border-cyan-500/30 text-cyan-400">
                 {item.item_type}

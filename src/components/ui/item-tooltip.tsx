@@ -16,6 +16,29 @@ export function ItemTooltip({ item }: ItemTooltipProps) {
 
   const rarityBadgeClass = item.rarity ? rarityColors[item.rarity as keyof typeof rarityColors] : "";
 
+  // Helper function to format camelCase to Title Case
+  const formatStatName = (key: string): string => {
+    return key
+      .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+      .replace(/^./, (str) => str.toUpperCase()) // Capitalize first letter
+      .trim();
+  };
+
+  // Filter valid stats
+  const validStats = item.stat_block 
+    ? Object.entries(item.stat_block).filter(([key, value]) => 
+        value !== 0 && value !== null && value !== undefined && value !== "" && key !== "weight"
+      )
+    : [];
+
+  // Check if we have valid footer data
+  const hasWeight = item.stat_block?.weight && item.stat_block.weight !== 0;
+  const hasValue = item.value && item.value !== 0;
+  const showFooter = hasWeight || hasValue;
+
+  // console log the results of item with id advanced-electrical-component-recipe
+  console.log("data of advanced-electrical-component-recipe", item.id.includes("angled-grip") ? item : null);
+
   return (
     <div className="w-[280px] bg-[oklch(var(--card-light))] border border-cyan-500/30 rounded-lg overflow-hidden shadow-[0_0_30px_rgba(6,182,212,0.3)]">
       {/* Header with image */}
@@ -58,45 +81,33 @@ export function ItemTooltip({ item }: ItemTooltipProps) {
         )}
 
         {/* Stats section */}
-        <div className="space-y-1.5 pt-2 border-t border-cyan-500/20">
-          {item.stat_block?.stackSize && (
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-400">Stack Size</span>
-              <span className="text-cyan-400 font-semibold">{item.stat_block.stackSize}</span>
-            </div>
-          )}
-          
-          {item.stat_block?.useTime && (
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-400">Use Time</span>
-              <span className="text-cyan-400 font-semibold">{item.stat_block.useTime}s</span>
-            </div>
-          )}
-          
-          {item.stat_block?.stamina && (
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-400">Stamina</span>
-              <span className="text-cyan-400 font-semibold">{item.stat_block.stamina}</span>
-            </div>
-          )}
-        </div>
+        {validStats.length > 0 && (
+          <div className="space-y-2 pt-2 border-t border-cyan-500/20">
+            {validStats.map(([key, value]) => (
+              <div key={key} className="flex justify-between items-center text-sm">
+                <span className="text-slate-400 font-medium">{formatStatName(key)}</span>
+                <span className="text-cyan-400 font-semibold tabular-nums">{value}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Footer with weight and value */}
-        <div className="flex justify-between items-center pt-2 border-t border-cyan-500/20">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-400">⚖️</span>
-            <span className="text-slate-300 font-medium">
-              {item.stat_block?.weight ? `${item.stat_block.weight} KG` : "0 KG"}
-            </span>
+        {(showFooter === true) && (
+          <div className="flex justify-between items-center pt-2 border-t border-cyan-500/20">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-slate-400">⚖️</span>
+                <span className="text-slate-300 font-medium tabular-nums">
+                  {item.stat_block!.weight} KG
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-amber-400">🪙</span>
+                <span className="text-amber-400 font-semibold tabular-nums">{item.value}</span>
+              </div>
           </div>
-          
-          {item.value && (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-amber-400">🪙</span>
-              <span className="text-amber-400 font-semibold">{item.value}</span>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
