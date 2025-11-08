@@ -16,6 +16,7 @@ import type { RequirementItem } from "@/lib/types";
 import { getAllQuests } from "~/server/db/queries/quests";
 import { getAllHideoutModules} from "~/server/db/queries/workstations";
 import { getAllItems } from "~/server/db/queries/items";
+import { getAllProjects } from "~/server/db/queries/projects";
 import { getLocalizedText } from "~/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { ItemTooltip } from "~/components/ui/item-tooltip";
@@ -23,6 +24,7 @@ import { ItemTooltip } from "~/components/ui/item-tooltip";
 export default function Calculator() {
   const [selectedQuests, setSelectedQuests] = useState<string[]>([]);
   const [selectedUpgrades, setSelectedUpgrades] = useState<string[]>([]);
+  const [selectedProjectPhases, setSelectedProjectPhases] = useState<string[]>([]);
   const [customMaterials, setCustomMaterials] = useState<RequirementItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [openComboboxIndex, setOpenComboboxIndex] = useState<number | null>(null);
@@ -45,7 +47,13 @@ export default function Calculator() {
     staleTime: 1000 * 60 * 10 // 10 minutes
   });
 
-  if (isLoadingQuests || isLoadingWorkstations || isLoadingItems) {
+  const { data: allProjects = [], isLoading: isLoadingProjects } = useQuery({
+    queryKey: ['projects'],
+    queryFn: getAllProjects,
+    staleTime: 1000 * 60 * 10 // 10 minutes
+  });
+
+  if (isLoadingQuests || isLoadingWorkstations || isLoadingItems || isLoadingProjects) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-slate-500">Loading...</p>
@@ -99,6 +107,29 @@ export default function Calculator() {
     }
   };
 
+  const toggleProjectPhase = (phaseId: string) => {
+    setSelectedProjectPhases(prev => 
+      prev.includes(phaseId) 
+        ? prev.filter(id => id !== phaseId)
+        : [...prev, phaseId]
+    );
+  };
+
+  const toggleAllProjectPhases = () => {
+    // Get all possible phase IDs
+    const allPhaseIds = allProjects.flatMap(project => 
+      project.phases.map(phase => `${project.id}-phase-${phase.phase}`)
+    );
+
+    if (selectedProjectPhases.length === allPhaseIds.length) {
+      // If all selected, deselect all
+      setSelectedProjectPhases([]);
+    } else {
+      // Select all
+      setSelectedProjectPhases(allPhaseIds);
+    }
+  };
+
   // Calculate total materials needed
   const calculateMaterials = () => {
     const materials: Record<string, { itemId: string; category: string; quantity: number }> = {};
@@ -137,6 +168,20 @@ export default function Calculator() {
       const levelData = workstation?.levels?.[level];
       
       levelData?.requirements?.forEach((req: { itemId: string; quantity: number }) => {
+        if (!req?.itemId) return;
+        const mat = ensureMaterial(req.itemId);
+        if (mat) mat.quantity += req.quantity ?? 0;
+      });
+    });
+
+    // Add project phase requirements
+    selectedProjectPhases.forEach(phaseId => {
+      const [projectId, phaseStr] = phaseId.split('-phase-');
+      const project = allProjects.find(p => p.id === projectId);
+      const phaseNum = parseInt(phaseStr ?? "0", 10);
+      const phase = project?.phases.find(p => p.phase === phaseNum);
+      
+      phase?.itemRequirements?.forEach((req) => {
         if (!req?.itemId) return;
         const mat = ensureMaterial(req.itemId);
         if (mat) mat.quantity += req.quantity ?? 0;
@@ -186,7 +231,7 @@ export default function Calculator() {
     return acc;
   }, {} as Record<string, Record<string, { itemId: string; category: string; quantity: number }>>);
   
-  const hasSelections = selectedQuests.length > 0 || selectedUpgrades.length > 0 || customMaterials.length > 0;
+  const hasSelections = selectedQuests.length > 0 || selectedUpgrades.length > 0 || selectedProjectPhases.length > 0 || customMaterials.length > 0;
 
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8">
@@ -259,6 +304,49 @@ export default function Calculator() {
                               onCheckedChange={() => toggleUpgrade(upgradeId)}
                             />
                             <span className="text-xs text-slate-400">Level {level.level}</span>
+                          </div>
+                        );
+                      })}
+                    </CollapsibleContent>
+                  </Collapsible>
+                ))}
+              </div>
+            </Card>
+
+            {/* Projects */}
+            <Card className="bg-slate-900/50 border-cyan-500/20 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-cyan-300">Select Projects</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleAllProjectPhases}
+                  className="text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                >
+                  {selectedProjectPhases.length === allProjects.flatMap(p => p.phases).length ? 'Deselect All' : 'Select All'}
+                </Button>
+              </div>
+              <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
+                {allProjects.map(project => (
+                  <Collapsible key={project.id} className="bg-[oklch(var(--card-light))] rounded">
+                    <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded hover:bg-slate-800/50 text-left">
+                      <span className="text-sm text-slate-300">{getLocalizedText(project.name)}</span>
+                      <ChevronDown size={16} className="text-slate-400" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pl-4 space-y-2 mt-2">
+                      {project.phases.map((phase) => {
+                        const phaseId = `${project.id}-phase-${phase.phase}`;
+                        return (
+                          <div key={phase.phase} className="space-y-1">
+                            <div className="flex items-center gap-3 p-2 rounded hover:bg-slate-800/30">
+                              <Checkbox
+                                checked={selectedProjectPhases.includes(phaseId)}
+                                onCheckedChange={() => toggleProjectPhase(phaseId)}
+                              />
+                              <span className="text-xs text-slate-400">
+                                Phase {phase.phase}: {getLocalizedText(phase.name)}
+                              </span>
+                            </div>
                           </div>
                         );
                       })}
