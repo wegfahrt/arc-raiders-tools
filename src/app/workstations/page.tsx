@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { workstationsApi, itemsApi } from "@/lib/services/api";
 import { useGameStore } from "@/lib/stores/game-store";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,14 +10,17 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Hammer, Check, Lock, ChevronDown, Info } from "lucide-react";
-import { getItemById } from "@/lib/data/mock-data";
 import { getLocalizedText } from "~/lib/utils";
+import { getAllHideoutModules } from "~/server/db/queries/workstations";
+import type { RequirementItem, Workstation, WorkstationLevel } from "~/lib/types";
 
 export default function Workstations() {
   const { data: workstations = [] } = useQuery({
     queryKey: ['workstations'],
-    queryFn: workstationsApi.getAll
+    queryFn: getAllHideoutModules
   });
+
+  console.log('Workstations:', workstations);
 
   const { workstationLevels, upgradeWorkstation, inventory } = useGameStore();
 
@@ -61,7 +63,7 @@ export default function Workstations() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {workstations.map(ws => {
               const current = workstationLevels[ws.id] || 0;
-              const progress = (current / ws.maxLevel) * 100;
+              const progress = (current / (ws.maxLevel ?? 1)) * 100;
               return (
                 <div key={ws.id} className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -85,8 +87,13 @@ function WorkstationCard({
   currentLevel,
   onUpgrade,
   inventory
-}: any) {
-  const progressPercentage = (currentLevel / workstation.maxLevel) * 100;
+}: {
+  workstation: Workstation;
+  index: number;
+  currentLevel: number;
+  onUpgrade: () => void;
+  inventory: Record<string, number>;
+}) {
 
   return (
     <motion.div
@@ -102,10 +109,7 @@ function WorkstationCard({
               <Hammer className="text-cyan-400" size={24} />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-cyan-300">{workstation.name}</h3>
-              {workstation.description && (
-                <p className="text-sm text-slate-400 mt-1">{workstation.description}</p>
-              )}
+              <h3 className="text-lg font-semibold text-cyan-300">{getLocalizedText(workstation.name)}</h3>
             </div>
           </div>
 
@@ -115,12 +119,11 @@ function WorkstationCard({
               <span className="text-slate-400">Overall Progress</span>
               <span className="text-cyan-400">Level {currentLevel}/{workstation.maxLevel}</span>
             </div>
-            <Progress value={progressPercentage} className="h-2" />
           </div>
 
           {/* Levels */}
           <Accordion type="multiple" className="space-y-2">
-            {workstation.levels.map((level: any, levelIndex: number) => {
+            {workstation.levels.map((level: WorkstationLevel, levelIndex: number) => {
               const isCompleted = levelIndex < currentLevel;
               const isCurrent = levelIndex === currentLevel;
               const isLocked = levelIndex > currentLevel;
@@ -166,18 +169,17 @@ function WorkstationCard({
                   <AccordionContent className="px-4 pb-4">
                     <div className="space-y-3 pt-2">
                       {/* Materials */}
-                      {level.requirementItemIds.length > 0 && (
+                      {level.requirements.length > 0 && (
                         <div className="space-y-2">
                           <p className="text-sm font-medium text-slate-300">Required Materials:</p>
-                          {level.requirementItemIds.map((req: any, i: number) => {
-                            const item = getItemById(req.itemId);
+                          {level.requirements.map((req: RequirementItem, i: number) => {
                             const have = inventory[req.itemId] || 0;
                             const hasEnough = have >= req.quantity;
 
                             return (
                               <div key={i} className="flex items-center justify-between text-sm pl-4">
                                 <span className="text-slate-300">
-                                  {item?.name || req.itemId}
+                                  {getLocalizedText(req.item.name)}
                                 </span>
                                 <span className={hasEnough ? "text-green-400" : "text-red-400"}>
                                   {have}/{req.quantity}
@@ -185,18 +187,6 @@ function WorkstationCard({
                               </div>
                             );
                           })}
-                        </div>
-                      )}
-
-                      {/* Prerequisites */}
-                      {level.prerequisites && level.prerequisites.length > 0 && (
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-slate-300">Prerequisites:</p>
-                          {level.prerequisites.map((prereq: string, i: number) => (
-                            <div key={i} className="text-sm text-slate-400 pl-4">
-                              • {prereq}
-                            </div>
-                          ))}
                         </div>
                       )}
 

@@ -63,7 +63,7 @@ export const skillNodes = pgTable("skill_nodes", {
 export const hideoutModules = pgTable("hideout_modules", {
 	id: text().primaryKey().notNull(),
 	name: jsonb().$type<LocalizedText>().notNull(),
-	maxLevel: integer("max_level"),
+	maxLevel: integer("max_level").notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
 });

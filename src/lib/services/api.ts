@@ -1,5 +1,5 @@
-import { mockQuests, mockItems, mockWorkstations, mockTips } from "../data/mock-data";
-import type { Quest, Item, Workstation, Tip } from "../types";
+import { mockQuests, mockTips } from "../data/mock-data";
+import type { Quest, Workstation, Tip } from "../types";
 
 // Simulate network delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -18,40 +18,6 @@ export const questsApi = {
   getByStatus: async (status: Quest["status"]): Promise<Quest[]> => {
     await delay(250);
     return mockQuests.filter(q => q.status === status);
-  }
-};
-
-export const itemsApi = {
-  getAll: async (): Promise<Item[]> => {
-    await delay(300);
-    return mockItems;
-  },
-  
-  getById: async (id: string): Promise<Item | undefined> => {
-    await delay(200);
-    return mockItems.find(i => i.id === id);
-  },
-  
-  getByType: async (type: Item["type"]): Promise<Item[]> => {
-    await delay(250);
-    return mockItems.filter(i => i.type === type);
-  },
-  
-  getByRarity: async (rarity: Item["rarity"]): Promise<Item[]> => {
-    await delay(250);
-    return mockItems.filter(i => i.rarity === rarity);
-  }
-};
-
-export const workstationsApi = {
-  getAll: async (): Promise<Workstation[]> => {
-    await delay(300);
-    return mockWorkstations;
-  },
-  
-  getById: async (id: string): Promise<Workstation | undefined> => {
-    await delay(200);
-    return mockWorkstations.find(w => w.id === id);
   }
 };
 

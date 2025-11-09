@@ -96,17 +96,19 @@ export interface Item {
   rarity: ItemRarity;
   value: number;
   imageFilename: string;
-  recyclesInto?: MaterialRecipe;
-  weightKg?: number;
-  stackSize?: number;
-  foundIn?: string;
-  effects?: {
+  recyclesInto: MaterialRecipe | null;
+  weightKg: string | null;
+  stackSize: number | null;
+  foundIn: string | null;
+  effects: {
     [effectName: string]: Effect;
-  };
-  salvagesInto?: MaterialRecipe;
-  tip?: string;
-  recipe?: MaterialRecipe;
-  craftBench?: string;
+  } | null;
+  salvagesInto: MaterialRecipe | null;
+  tip: string | null;
+  recipe: MaterialRecipe | null;
+  craftBench: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 /**
@@ -150,6 +152,9 @@ export interface ItemWithUsage extends Item {
 export interface RequirementItem {
   itemId: string;
   quantity: number;
+  moduleId: string;
+  level: number;
+  item: Item;
 }
 
 export interface Quest {
@@ -170,16 +175,17 @@ export interface Quest {
 
 export interface WorkstationLevel {
   level: number;
-  requirementItemIds: RequirementItem[];
-  prerequisites?: string[];
-  otherRequirements?: string[];
+  moduleId: string;
+  otherRequirements: string[] | null;
+  requirements: RequirementItem[];
 }
 
 export interface Workstation {
   id: string;
-  name: string | TranslatedText;
-  description?: string;
+  name: LocalizedText;
   maxLevel: number;
+  createdAt: string | null;
+  updatedAt: string | null;
   currentLevel?: number;
   levels: WorkstationLevel[];
 }

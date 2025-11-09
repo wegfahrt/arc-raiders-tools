@@ -1,10 +1,9 @@
 'use server';
 
-import { asc, eq, gt } from 'drizzle-orm';
+import { asc } from 'drizzle-orm';
 import { db } from '../index';
-import { hideoutLevels, hideoutModules, hideoutRequirements } from '../schema';
-import type { Item, ItemsResponse } from '~/lib/types';
-import { getLocalizedText } from '~/lib/utils';
+import { hideoutModules } from '../schema';
+
 
 export async function getAllHideoutModules() {
   return db.query.hideoutModules.findMany({
@@ -19,5 +18,6 @@ export async function getAllHideoutModules() {
         },
       },
     },
+    orderBy: [asc(hideoutModules.maxLevel)],
   });
 }
