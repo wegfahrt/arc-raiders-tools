@@ -107,67 +107,71 @@ export default function QuestDetailModal({
           {/* Quest Chain Info - Positioned at top for easy navigation */}
           {(quest.previousQuestIds.length > 0 || quest.nextQuestIds.length > 0) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Prerequisites */}
-              {quest.previousQuestIds.length > 0 && (
-                <div className="p-3 rounded-lg bg-slate-800/30 border border-slate-700/50">
-                  <h4 className="text-xs font-semibold text-slate-300 flex items-center gap-2 mb-2">
-                    <span className="w-1 h-3 bg-blue-400 rounded-full" />
-                    Prerequisites
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {quest.previousQuestIds.map(prevId => {
-                      const prevQuest = allQuests.find(q => q.id === prevId);
-                      const isPrevCompleted = completedQuests.includes(prevId);
-                      return prevQuest ? (
-                        <Badge 
-                          key={prevId} 
-                          variant="outline" 
-                          className={`cursor-pointer transition-all ${
-                            isPrevCompleted 
-                              ? statusColors.completed
-                              : statusColors.completed.replace('border-blue-500/50', 'border-blue-500/30')
-                          } hover:bg-blue-500/30`}
-                          onClick={() => handleQuestClick(prevId)}
-                        >
-                          {isPrevCompleted && <CheckCircle2 size={12} className="mr-1" />}
-                          {getLocalizedText(prevQuest.name)}
-                        </Badge>
-                      ) : null;
-                    })}
+              {/* Prerequisites - Always left column */}
+              <div>
+                {quest.previousQuestIds.length > 0 && (
+                  <div className="p-3 rounded-lg bg-slate-800/30 border border-slate-700/50">
+                    <h4 className="text-xs font-semibold text-slate-300 flex items-center gap-2 mb-2">
+                      <span className="w-1 h-3 bg-blue-400 rounded-full" />
+                      Prerequisites
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {quest.previousQuestIds.map(prevId => {
+                        const prevQuest = allQuests.find(q => q.id === prevId);
+                        const isPrevCompleted = completedQuests.includes(prevId);
+                        return prevQuest ? (
+                          <Badge 
+                            key={prevId} 
+                            variant="outline" 
+                            className={`cursor-pointer transition-all ${
+                              isPrevCompleted 
+                                ? statusColors.completed
+                                : statusColors.completed.replace('border-blue-500/50', 'border-blue-500/30')
+                            } hover:bg-blue-500/30`}
+                            onClick={() => handleQuestClick(prevId)}
+                          >
+                            {isPrevCompleted && <CheckCircle2 size={12} className="mr-1" />}
+                            {getLocalizedText(prevQuest.name)}
+                          </Badge>
+                        ) : null;
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* Unlocks */}
-              {quest.nextQuestIds.length > 0 && (
-                <div className="p-3 rounded-lg bg-slate-800/30 border border-slate-700/50">
-                  <h4 className="text-xs font-semibold text-slate-300 flex items-center gap-2 mb-2">
-                    <span className="w-1 h-3 bg-orange-400 rounded-full" />
-                    Unlocks
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {quest.nextQuestIds.map(nextId => {
-                      const nextQuest = allQuests.find(q => q.id === nextId);
-                      const isNextCompleted = completedQuests.includes(nextId);
-                      return nextQuest ? (
-                        <Badge 
-                          key={nextId} 
-                          variant="outline" 
-                          className={`cursor-pointer transition-all ${
-                            isNextCompleted 
-                              ? statusColors.completed
-                              : statusColors.locked
-                          } hover:bg-orange-500/30`}
-                          onClick={() => handleQuestClick(nextId)}
-                        >
-                          {isNextCompleted && <CheckCircle2 size={12} className="mr-1" />}
-                          {getLocalizedText(nextQuest.name)}
-                        </Badge>
-                      ) : null;
-                    })}
+              {/* Unlocks - Always right column */}
+              <div>
+                {quest.nextQuestIds.length > 0 && (
+                  <div className="p-3 rounded-lg bg-slate-800/30 border border-slate-700/50">
+                    <h4 className="text-xs font-semibold text-slate-300 flex items-center gap-2 mb-2">
+                      <span className="w-1 h-3 bg-orange-400 rounded-full" />
+                      Unlocks
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {quest.nextQuestIds.map(nextId => {
+                        const nextQuest = allQuests.find(q => q.id === nextId);
+                        const isNextCompleted = completedQuests.includes(nextId);
+                        return nextQuest ? (
+                          <Badge 
+                            key={nextId} 
+                            variant="outline" 
+                            className={`cursor-pointer transition-all ${
+                              isNextCompleted 
+                                ? statusColors.completed
+                                : statusColors.locked
+                            } hover:bg-orange-500/30`}
+                            onClick={() => handleQuestClick(nextId)}
+                          >
+                            {isNextCompleted && <CheckCircle2 size={12} className="mr-1" />}
+                            {getLocalizedText(nextQuest.name)}
+                          </Badge>
+                        ) : null;
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
 
