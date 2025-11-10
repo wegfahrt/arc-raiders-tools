@@ -60,15 +60,30 @@ export default function Quests() {
     };
   });
 
-  const filteredQuests = quests.filter(quest => {
-    const matchesSearch = getLocalizedText(quest.name).toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = 
-      activeTab === "all" || 
-      (activeTab === "active" && quest.status === "active") ||
-      (activeTab === "locked" && quest.status === "locked") ||
-      (activeTab === "completed" && quest.status === "completed");
-    return matchesSearch && matchesTab;
-  });
+  const filteredQuests = quests
+    .filter(quest => {
+      const matchesSearch = getLocalizedText(quest.name).toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesTab = 
+        activeTab === "all" || 
+        (activeTab === "active" && quest.status === "active") ||
+        (activeTab === "locked" && quest.status === "locked") ||
+        (activeTab === "completed" && quest.status === "completed");
+      return matchesSearch && matchesTab;
+    })
+    .sort((a, b) => {
+      // Calculate combined content length for each quest
+      const aLength = 
+        a.objectives.length + 
+        (a.requirements?.length || 0) + 
+        (a.rewards?.length || 0);
+      const bLength = 
+        b.objectives.length + 
+        (b.requirements?.length || 0) + 
+        (b.rewards?.length || 0);
+
+      // Sort in ascending order (shortest first)
+      return aLength - bLength;
+    });
 
   const statusCounts = {
     active: quests.filter(q => q.status === "active").length,
