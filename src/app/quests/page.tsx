@@ -209,6 +209,7 @@ export default function Quests() {
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           onToggleComplete={(questId) => toggleQuest(questId, questsData)}
+          onQuestNavigate={handleQuestClick}
           allQuests={questsData}
         />
       </div>
