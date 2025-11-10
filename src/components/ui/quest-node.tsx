@@ -15,6 +15,8 @@ interface QuestNodeData {
     xp: number;
     objectives: string[];
   };
+  searchQuery?: string;
+  isHighlighted?: boolean;
 }
 
 const statusColors = {
@@ -37,6 +39,8 @@ const statusGlowColors = {
 
 export const QuestNode = memo(({ data }: NodeProps<QuestNodeData>) => {
   const status = data.status;
+  const isHighlighted = data.isHighlighted ?? true; // Default to true if no search
+  const isDimmed = !isHighlighted && data.searchQuery && data.searchQuery.length > 0;
 
   return (
     <div
@@ -48,6 +52,8 @@ export const QuestNode = memo(({ data }: NodeProps<QuestNodeData>) => {
         hover:scale-105
         ${statusBorderColors[status]}
         ${statusGlowColors[status]}
+        ${isDimmed ? 'opacity-30' : 'opacity-100'}
+        ${isHighlighted && data.searchQuery ? 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-slate-950' : ''}
       `}
     >
       {/* Top Handle */}

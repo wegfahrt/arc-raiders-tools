@@ -32,12 +32,14 @@ const nodeTypes = {
 
 interface QuestFlowChartProps {
   quests: QuestWithStatus[];
+  searchQuery?: string;
   onQuestClick?: (quest: QuestWithStatus) => void;
   onToggleComplete?: (questId: string) => void;
 }
 
 export default function QuestFlowChart({ 
   quests, 
+  searchQuery = '',
   onQuestClick,
   onToggleComplete 
 }: QuestFlowChartProps) {
@@ -52,6 +54,29 @@ export default function QuestFlowChart({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
+  // Update nodes with search highlighting
+  useMemo(() => {
+    const updatedNodes = initialNodes.map(node => {
+      const questName = node.data.label.toLowerCase();
+      const traderName = node.data.trader.toLowerCase();
+      const search = searchQuery.toLowerCase();
+      
+      const isHighlighted = !searchQuery || 
+                           questName.includes(search) || 
+                           traderName.includes(search);
+      
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          searchQuery,
+          isHighlighted,
+        },
+      };
+    });
+    setNodes(updatedNodes);
+  }, [initialNodes, searchQuery, setNodes]);
+
   // Handle node clicks
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     const quest = quests.find(q => q.id === node.id);
@@ -65,8 +90,19 @@ export default function QuestFlowChart({
     const active = quests.filter(q => q.status === 'active').length;
     const locked = quests.filter(q => q.status === 'locked').length;
     const completed = quests.filter(q => q.status === 'completed').length;
-    return { active, locked, completed, total: quests.length };
-  }, [quests]);
+    
+    // Calculate search matches
+    const searchMatches = searchQuery 
+      ? quests.filter(q => {
+          const questName = (typeof q.name === 'string' ? q.name : q.name.en).toLowerCase();
+          const traderName = q.trader.toLowerCase();
+          const search = searchQuery.toLowerCase();
+          return questName.includes(search) || traderName.includes(search);
+        }).length
+      : quests.length;
+    
+    return { active, locked, completed, total: quests.length, searchMatches };
+  }, [quests, searchQuery]);
 
   return (
     <div className="w-full h-[calc(100vh-240px)] min-h-[600px] rounded-lg overflow-hidden border border-cyan-500/20 bg-slate-950">
@@ -130,6 +166,13 @@ export default function QuestFlowChart({
               <span className="text-xs text-slate-300">Completed ({stats.completed})</span>
             </div>
 
+            {searchQuery && (
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-700">
+                <div className="w-4 h-4 bg-yellow-400 rounded border-2 border-yellow-300"></div>
+                <span className="text-xs text-slate-300">Search Match</span>
+              </div>
+            )}
+
             <div className="pt-2 border-t border-slate-700">
               <div className="flex items-center gap-2">
                 <Zap size={14} className="text-cyan-400" />
@@ -158,6 +201,14 @@ export default function QuestFlowChart({
                 {stats.total}
               </Badge>
             </div>
+            {searchQuery && (
+              <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-700">
+                <span className="text-xs text-slate-400">Search Results:</span>
+                <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/50">
+                  {stats.searchMatches}
+                </Badge>
+              </div>
+            )}
           </div>
         </Panel>
       </ReactFlow>

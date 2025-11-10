@@ -195,6 +195,7 @@ export default function Quests() {
             ) : (
               <QuestFlowChart
                 quests={quests}
+                searchQuery={searchQuery}
                 onQuestClick={handleQuestClick}
                 onToggleComplete={(questId) => toggleQuest(questId, questsData)}
               />
