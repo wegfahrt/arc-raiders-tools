@@ -133,7 +133,7 @@ export default function QuestFlowChart({
             <div className="pt-2 border-t border-slate-700">
               <div className="flex items-center gap-2">
                 <Zap size={14} className="text-cyan-400" />
-                <span className="text-xs text-slate-400">Click node for details</span>
+                <span className="text-xs text-slate-400">Click nodes for details</span>
               </div>
             </div>
           </div>

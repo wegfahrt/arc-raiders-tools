@@ -9,8 +9,6 @@ import {
 } from '~/components/ui/dialog';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
-import { ItemTooltip } from '~/components/ui/item-tooltip';
 import { CheckCircle2, CircleHelp, User, X } from 'lucide-react';
 import type { QuestWithRelations } from '~/lib/types';
 import { getLocalizedText } from '~/lib/utils';
@@ -62,7 +60,7 @@ export default function QuestDetailModal({
                 <span className="text-slate-400">{quest.trader}</span>
               </DialogDescription>
             </div>
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-col items-end gap-2 m-2">
               <Badge className={statusColors[quest.status]}>
                 {quest.status}
               </Badge>
@@ -109,10 +107,7 @@ export default function QuestDetailModal({
               </h4>
               
               <div className="grid grid-cols-1 gap-2">
-                <TooltipProvider delayDuration={300}>
                   {quest.requirements.map((req, i) => (
-                    <Tooltip key={i}>
-                      <TooltipTrigger asChild>
                         <div 
                           className="flex items-center gap-3 p-3 rounded-lg border transition-all bg-orange-500/5 border-orange-500/20 hover:border-orange-500/40 cursor-pointer "
                         >
@@ -142,15 +137,7 @@ export default function QuestDetailModal({
                             x{req.quantity}
                           </Badge>
                         </div>
-                      </TooltipTrigger>
-                      {req.item && req.item.type !== "Unknown" && (
-                        <TooltipContent side="top" className="p-0 border-0 bg-transparent">
-                          <ItemTooltip item={req.item} />
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
                   ))}
-                </TooltipProvider>
               </div>
             </div>
           )}
@@ -164,10 +151,7 @@ export default function QuestDetailModal({
               </h4>
               
               <div className="grid grid-cols-1 gap-2">
-                <TooltipProvider delayDuration={300}>
                   {quest.rewards.map((reward, i) => (
-                    <Tooltip key={i}>
-                      <TooltipTrigger asChild>
                         <div 
                           className="flex items-center gap-3 p-3 rounded-lg border transition-all bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40 cursor-pointer"
                         >
@@ -199,15 +183,7 @@ export default function QuestDetailModal({
                             x{reward.quantity}
                           </Badge>
                         </div>
-                      </TooltipTrigger>
-                      {reward.item && reward.item.type !== "Unknown" && (
-                        <TooltipContent side="top" className="p-0 border-0 bg-transparent">
-                          <ItemTooltip item={reward.item} />
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
                   ))}
-                </TooltipProvider>
               </div>
             </div>
           )}

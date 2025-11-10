@@ -56,19 +56,20 @@ export const QuestNode = memo(({ data }: NodeProps<QuestNodeData>) => {
         position={Position.Top} 
         className="w-3 h-3 !bg-cyan-400 !border-2 !border-slate-900"
       />
-      
-      {/* Status Badge */}
-      <div className="absolute -top-2 -right-2 z-10">
-        <Badge className={`text-xs px-2 py-0.5 ${statusColors[status]}`}>
-          {status === 'completed' && <CheckCircle2 size={12} className="mr-1" />}
-          {status === 'locked' && <Lock size={12} className="mr-1" />}
-          {status}
-        </Badge>
-      </div>
+      <div className="mb-3 flex justify-between items-start">
+        {/* Quest Name */}
+        <div className="font-bold text-sm mb-2 text-cyan-300 line-clamp-2 pr-2">
+          {data.label}
+        </div>
 
-      {/* Quest Name */}
-      <div className="font-bold text-sm mb-2 text-cyan-300 line-clamp-2 pr-8">
-        {data.label}
+        {/* Status Badge */}
+        <div className="-mr-1">
+          <Badge className={`text-xs px-2 py-0.5 ${statusColors[status]}`}>
+            {status === 'completed' && <CheckCircle2 size={12} className="mr-1" />}
+            {status === 'locked' && <Lock size={12} className="mr-1" />}
+            {status}
+          </Badge>
+        </div>
       </div>
 
       {/* Trader Info */}

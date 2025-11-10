@@ -194,7 +194,7 @@ export default function Quests() {
               </div>
             ) : (
               <QuestFlowChart
-                quests={filteredQuests}
+                quests={quests}
                 onQuestClick={handleQuestClick}
                 onToggleComplete={(questId) => toggleQuest(questId, questsData)}
               />
