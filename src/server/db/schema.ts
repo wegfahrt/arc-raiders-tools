@@ -7,13 +7,33 @@ import type { LocalizedText, MaterialRecipe, Effect } from '~/lib/types';
 export const quests = pgTable("quests", {
 	id: text().primaryKey().notNull(),
 	name: jsonb().$type<LocalizedText>().notNull(),
-	trader: text(),
-	objectives: jsonb().$type<string[]>(),
-	xp: integer(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	trader: text().notNull(),
+	objectives: jsonb().$type<string[]>().notNull(),
+	xp: integer().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	index("idx_quests_trader").using("btree", table.trader.asc().nullsLast().op("text_ops")),
+]);
+
+// NEW: Quest chain/progression table
+export const questChain = pgTable("quest_chain", {
+	questId: text("quest_id").notNull(),
+	previousQuestId: text("previous_quest_id").notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.questId],
+			foreignColumns: [quests.id],
+			name: "quest_chain_quest_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.previousQuestId],
+			foreignColumns: [quests.id],
+			name: "quest_chain_previous_quest_id_fkey"
+		}).onDelete("cascade"),
+	primaryKey({ columns: [table.questId, table.previousQuestId], name: "quest_chain_pkey"}),
+	index("idx_quest_chain_quest_id").using("btree", table.questId.asc().nullsLast().op("text_ops")),
+	index("idx_quest_chain_previous_quest_id").using("btree", table.previousQuestId.asc().nullsLast().op("text_ops")),
 ]);
 
 export const items = pgTable("items", {
@@ -255,6 +275,27 @@ export const materialUsage = pgView("material_usage", {
 export const questsRelations = relations(quests, ({ many }) => ({
   requirements: many(questRequirements),
   rewards: many(questRewards),
+  // Quest chain relations
+  previousQuests: many(questChain, {
+    relationName: "quest_to_previous"
+  }),
+  nextQuests: many(questChain, {
+    relationName: "previous_to_quest"
+  }),
+}));
+
+// NEW: Quest chain relations
+export const questChainRelations = relations(questChain, ({ one }) => ({
+  quest: one(quests, {
+    fields: [questChain.questId],
+    references: [quests.id],
+    relationName: "quest_to_previous"
+  }),
+  previousQuest: one(quests, {
+    fields: [questChain.previousQuestId],
+    references: [quests.id],
+    relationName: "previous_to_quest"
+  }),
 }));
 
 export const questRequirementsRelations = relations(questRequirements, ({ one }) => ({

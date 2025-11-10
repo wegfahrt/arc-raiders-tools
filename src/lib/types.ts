@@ -157,16 +157,81 @@ export interface RequirementItem {
   item: Item;
 }
 
+/**
+ * Base Quest interface
+ */
 export interface Quest {
   id: string;
   name: string | TranslatedText;
   trader: string;
   objectives: string[];
-  requiredItemIds?: RequirementItem[];
-  rewardItemIds?: RequirementItem[];
+  requiredItem?: RequirementItem[];
+  rewardItem?: RequirementItem[];
   xp: number;
-  status?: "active" | "locked" | "completed";
-  prerequisites?: string[];
+  // Quest chain/progression
+  previousQuestIds?: string[];
+  nextQuestIds?: string[];
+}
+
+export interface QuestStatus extends Quest {
+  status: "active" | "locked" | "completed"
+}
+
+/**
+ * Database Quest (as stored in Supabase/Drizzle)
+ */
+export interface DbQuest {
+  id: string;
+  name: LocalizedText;
+  trader: string;
+  objectives: string[];
+  xp: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Quest chain relationship
+ */
+export interface QuestChain {
+  questId: string;
+  previousQuestId: string;
+}
+
+/**
+ * Quest with full relationship data populated
+ */
+export interface QuestWithRelations extends DbQuest {
+  requirements: {
+    itemId: string;
+    quantity: number;
+    item?: Item;
+  }[];
+  rewards: {
+    itemId: string;
+    quantity: number;
+    item?: Item;
+  }[];
+  previousQuests: {
+    previousQuestId: string;
+    quest?: DbQuest;
+  }[];
+  nextQuests: {
+    questId: string;
+    quest?: DbQuest;
+  }[];
+}
+
+/**
+ * Simplified quest chain for UI display
+ */
+export interface QuestChainNode {
+  quest: DbQuest;
+  previousQuests: QuestChainNode[];
+  nextQuests: QuestChainNode[];
+  depth?: number; // For tree visualization
+  isCompleted?: boolean;
+  isAvailable?: boolean;
 }
 
 // ============================================================================
@@ -467,6 +532,38 @@ export interface ProjectProgress {
   isComplete: boolean;
 }
 
+/**
+ * User quest progress tracking
+ */
+export interface UserQuestProgress {
+  userId: string;
+  questId: string;
+  status: 'not_started' | 'in_progress' | 'completed';
+  objectivesCompleted: number[];
+  itemsSubmitted: Record<string, number>;
+  startedAt?: string;
+  completedAt?: string;
+  lastUpdated: string;
+}
+
+/**
+ * Quest chain progress visualization
+ */
+export interface QuestChainProgress {
+  questId: string;
+  quest: DbQuest;
+  status: 'locked' | 'available' | 'in_progress' | 'completed';
+  progress?: number;
+  previousQuests: {
+    questId: string;
+    status: 'completed' | 'in_progress' | 'not_started';
+  }[];
+  nextQuests: {
+    questId: string;
+    isUnlocked: boolean;
+  }[];
+}
+
 // ============================================================================
 // SYNC METADATA
 // ============================================================================
@@ -519,6 +616,11 @@ export interface ItemsResponse {
   pagination: Pagination;
 }
 
+export interface QuestsResponse {
+  data: QuestWithRelations[];
+  pagination: Pagination;
+}
+
 // ============================================================================
 // FILTER & SEARCH TYPES
 // ============================================================================
@@ -541,6 +643,16 @@ export interface ItemSortOptions {
   field: "name" | "value" | "rarity" | "type" | "updatedAt";
   direction: "asc" | "desc";
   locale?: string; // For sorting localized names
+}
+
+export interface QuestFilters {
+  trader?: string | string[];
+  minXp?: number;
+  maxXp?: number;
+  hasPrerequisites?: boolean;
+  isChainStart?: boolean; // Quests with no previous quests
+  isChainEnd?: boolean; // Quests with no next quests
+  search?: string;
 }
 
 // ============================================================================

@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard", soon: true },
-  { path: "/quests", icon: ScrollText, label: "Quests", soon: true },
+  { path: "/quests", icon: ScrollText, label: "Quests" },
   { path: "/items", icon: Package, label: "Items" },
   { path: "/workstations", icon: Hammer, label: "Workstations"},
   { path: "/calculator", icon: Calculator, label: "Calculator" },

@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { QuestWithRelations } from '~/lib/types';
 
 interface GameState {
   // Quest progress
-  questProgress: Record<string, { completed: boolean; objectives: Record<number, boolean> }>;
-  toggleQuestObjective: (questId: string, objectiveIndex: number) => void;
+  completedQuests: string[];
+  toggleQuest: (questId: string, allQuests: QuestWithRelations[]) => void;
   
   // Inventory
   inventory: Record<string, number>;
@@ -29,25 +30,53 @@ interface GameState {
 export const useGameStore = create<GameState>()(
   persist(
     (set) => ({
-      questProgress: {},
-      toggleQuestObjective: (questId, objectiveIndex) =>
-    set((state) => {
-      const prev = state.questProgress[questId];
-      const prevObjectives = prev?.objectives ?? ({} as Record<number, boolean>);
-      const newObjectives = {
-        ...prevObjectives,
-        [objectiveIndex]: !prevObjectives[objectiveIndex],
-      };
-      return {
-        questProgress: {
-          ...state.questProgress,
-          [questId]: {
-            completed: prev?.completed ?? false,
-            objectives: newObjectives,
-          },
-        },
-      };
-    }),
+      completedQuests: [],
+      toggleQuest: (questId, allQuests) =>
+        set((state) => {
+          // If quest is already completed, remove it (and potentially orphan dependent quests)
+          if (state.completedQuests.includes(questId)) {
+            return {
+              completedQuests: state.completedQuests.filter(id => id !== questId)
+            };
+          }
+
+          // Find all prerequisite quests recursively
+          const questsToComplete = new Set<string>();
+          
+          const addPrerequisites = (currentQuestId: string) => {
+            // If already in completed list, stop recursion
+            if (state.completedQuests.includes(currentQuestId)) {
+              return;
+            }
+            
+            // If already processed in this iteration, stop to prevent infinite loops
+            if (questsToComplete.has(currentQuestId)) {
+              return;
+            }
+            
+            // Add current quest
+            questsToComplete.add(currentQuestId);
+            
+            // Find the quest in the provided list
+            const quest = allQuests.find(q => q.id === currentQuestId);
+            if (!quest) return;
+            
+            // Recursively add all previous quests
+            if (quest.previousQuests && quest.previousQuests.length > 0) {
+              quest.previousQuests.forEach(prev => {
+                addPrerequisites(prev.previousQuestId);
+              });
+            }
+          };
+          
+          // Start recursion from the selected quest
+          addPrerequisites(questId);
+          
+          // Combine existing completed quests with newly completed ones
+          return {
+            completedQuests: [...state.completedQuests, ...Array.from(questsToComplete)]
+          };
+        }),
 
       inventory: {
         fabric: 10,

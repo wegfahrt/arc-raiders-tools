@@ -3,34 +3,70 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { questsApi } from "@/lib/services/api";
 import { useGameStore } from "@/lib/stores/game-store";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Search, Grid3x3, GitBranch, ChevronDown, User } from "lucide-react";
-import type { Quest } from "@/lib/types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ItemTooltip } from "@/components/ui/item-tooltip";
+import { Search, Grid3x3, GitBranch, ChevronDown, User, CheckCircle2, CircleHelp } from "lucide-react";
+import type { QuestWithRelations } from "@/lib/types";
+import { getAllQuests } from "~/server/db/queries/quests";
+import { getLocalizedText } from "~/lib/utils";
+
+type QuestStatus = "active" | "locked" | "completed";
+
+interface QuestWithStatus extends QuestWithRelations {
+  status: QuestStatus;
+  previousQuestIds: string[];
+  nextQuestIds: string[];
+}
 
 export default function Quests() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"cards" | "flowchart">("cards");
   const [activeTab, setActiveTab] = useState<"all" | "active" | "locked" | "completed">("all");
 
-  const { data: quests = [] } = useQuery({
+  const { data: questsData = [] } = useQuery({
     queryKey: ['quests'],
-    queryFn: questsApi.getAll
+    queryFn: getAllQuests,
   });
 
-  const { questProgress, toggleQuestObjective } = useGameStore();
+  const { completedQuests, toggleQuest } = useGameStore();
+
+  // Add status to quests based on completedQuests
+  const quests: QuestWithStatus[] = questsData.map(quest => {
+    // Extract previous and next quest IDs from relations
+    const previousQuestIds = quest.previousQuests?.map(pq => pq.previousQuestId) ?? [];
+    const nextQuestIds = quest.nextQuests?.map(nq => nq.questId) ?? [];
+
+    let status: QuestStatus = "locked";
+    if (completedQuests.includes(quest.id)) {
+      status = "completed";
+    } else {
+      // Check if all prerequisites are met or if it is a starting quest
+      const prerequisitesMet = previousQuestIds.every(prereqId => completedQuests.includes(prereqId));
+      status = prerequisitesMet ? "active" : "locked";
+    }
+    
+    return { 
+      ...quest, 
+      status,
+      previousQuestIds,
+      nextQuestIds
+    };
+  });
 
   const filteredQuests = quests.filter(quest => {
-    const matchesSearch = quest.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = activeTab === "all" || quest.status === activeTab;
+    const matchesSearch = getLocalizedText(quest.name).toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTab = 
+      activeTab === "all" || 
+      (activeTab === "active" && quest.status === "active") ||
+      (activeTab === "locked" && quest.status === "locked") ||
+      (activeTab === "completed" && quest.status === "completed");
     return matchesSearch && matchesTab;
   });
 
@@ -41,12 +77,6 @@ export default function Quests() {
     all: quests.length
   };
 
-  const statusColors = {
-    active: "bg-cyan-500/20 text-cyan-400 border-cyan-500/50",
-    locked: "bg-orange-500/20 text-orange-400 border-orange-500/50",
-    completed: "bg-blue-500/20 text-blue-400 border-blue-500/50"
-  };
-
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -55,7 +85,7 @@ export default function Quests() {
           <h1 className="text-3xl font-bold text-cyan-400">Quests</h1>
           <div className="flex gap-2">
             <Button
-              variant={viewMode === "cards" ? "default" : "outline"}
+              variant={viewMode === "cards" ? "outline" : "default"}
               size="sm"
               onClick={() => setViewMode("cards")}
               className="gap-2"
@@ -64,7 +94,7 @@ export default function Quests() {
               Cards
             </Button>
             <Button
-              variant={viewMode === "flowchart" ? "default" : "outline"}
+              variant={viewMode === "flowchart" ? "outline" : "default"}
               size="sm"
               onClick={() => setViewMode("flowchart")}
               className="gap-2"
@@ -89,10 +119,30 @@ export default function Quests() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
           <TabsList className="bg-slate-900/50 border border-cyan-500/20">
-            <TabsTrigger value="all">All ({statusCounts.all})</TabsTrigger>
-            <TabsTrigger value="active">Active ({statusCounts.active})</TabsTrigger>
-            <TabsTrigger value="locked">Locked ({statusCounts.locked})</TabsTrigger>
-            <TabsTrigger value="completed">Completed ({statusCounts.completed})</TabsTrigger>
+            <TabsTrigger 
+              value="all"
+              className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-300 data-[state=active]:border-cyan-500/50 data-[state=active]:shadow-[0_0_10px_rgba(6,182,212,0.3)] hover:bg-slate-800/50 hover:text-cyan-400 transition-all duration-200"
+            >
+              All ({statusCounts.all})
+            </TabsTrigger>
+            <TabsTrigger 
+              value="active"
+              className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-300 data-[state=active]:border-cyan-500/50 data-[state=active]:shadow-[0_0_10px_rgba(6,182,212,0.3)] hover:bg-slate-800/50 hover:text-cyan-400 transition-all duration-200"
+            >
+              Active ({statusCounts.active})
+            </TabsTrigger>
+            <TabsTrigger 
+              value="locked"
+              className="data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-300 data-[state=active]:border-orange-500/50 data-[state=active]:shadow-[0_0_10px_rgba(249,115,22,0.3)] hover:bg-slate-800/50 hover:text-orange-400 transition-all duration-200"
+            >
+              Locked ({statusCounts.locked})
+            </TabsTrigger>
+            <TabsTrigger 
+              value="completed"
+              className="data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-300 data-[state=active]:border-blue-500/50 data-[state=active]:shadow-[0_0_10px_rgba(59,130,246,0.3)] hover:bg-slate-800/50 hover:text-blue-400 transition-all duration-200"
+            >
+              Completed ({statusCounts.completed})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value={activeTab} className="mt-6">
@@ -103,8 +153,9 @@ export default function Quests() {
                     key={quest.id} 
                     quest={quest} 
                     index={index}
-                    onToggleObjective={toggleQuestObjective}
-                    progress={questProgress[quest.id]}
+                    allQuests={questsData}
+                    isCompleted={completedQuests.includes(quest.id)}
+                    onToggleComplete={() => toggleQuest(quest.id, questsData)}
                   />
                 ))}
               </div>
@@ -125,21 +176,18 @@ export default function Quests() {
 
 function QuestCard({ 
   quest, 
-  index, 
-  onToggleObjective,
-  progress 
+  index,
+  allQuests,
+  isCompleted,
+  onToggleComplete
 }: { 
-  quest: Quest; 
+  quest: QuestWithStatus; 
   index: number;
-  onToggleObjective: (questId: string, objectiveIndex: number) => void;
-  progress?: { completed: boolean; objectives: Record<number, boolean> };
+  allQuests: QuestWithRelations[];
+  isCompleted: boolean;
+  onToggleComplete: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  
-  const completedObjectives = Object.values(progress?.objectives || {}).filter(Boolean).length;
-  const progressPercentage = quest.objectives.length > 0 
-    ? (completedObjectives / quest.objectives.length) * 100 
-    : 0;
 
   return (
     <motion.div
@@ -151,14 +199,14 @@ function QuestCard({
         <div className="space-y-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-cyan-300">{quest.name}</h3>
+              <h3 className="text-lg font-semibold text-cyan-300">{getLocalizedText(quest.name)}</h3>
               <div className="flex items-center gap-2 mt-1">
                 <User size={14} className="text-slate-400" />
                 <span className="text-sm text-slate-400">{quest.trader}</span>
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <Badge className={quest.status ? statusColors[quest.status] : ""}>
+              <Badge className={statusColors[quest.status]}>
                 {quest.status}
               </Badge>
               <Badge variant="outline" className="text-cyan-400 border-cyan-500/30">
@@ -167,70 +215,173 @@ function QuestCard({
             </div>
           </div>
 
-          <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between text-cyan-400 hover:text-cyan-300">
-                <span>Objectives ({completedObjectives}/{quest.objectives.length})</span>
-                <ChevronDown className={`transition-transform ${isOpen ? "rotate-180" : ""}`} size={16} />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-2 mt-2">
+          {/* Objectives */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+              <span className="w-1 h-4 bg-cyan-400 rounded-full" />
+              Objectives ({quest.objectives.length})
+            </h4>
+            
+            <div className="grid grid-cols-1 gap-2">
               {quest.objectives.map((objective, i) => (
-                <div key={i} className="flex items-start gap-3 p-2 rounded hover:bg-slate-800/50">
-                  <Checkbox
-                    checked={progress?.objectives?.[i] || false}
-                    onCheckedChange={() => onToggleObjective(quest.id, i)}
-                    className="mt-0.5"
-                  />
-                  <span className="text-sm text-slate-300 flex-1">{objective}</span>
+                <div 
+                  key={i} 
+                  className="flex items-start gap-3 p-3 rounded-lg border transition-all bg-cyan-500/5 border-cyan-500/20 hover:border-cyan-500/40"
+                >
+                  {/* Number Badge */}
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center border flex-shrink-0 bg-cyan-500/10 border-cyan-500/20">
+                    <span className="text-cyan-400 font-bold text-sm">{i + 1}</span>
+                  </div>
+
+                  {/* Objective Text */}
+                  <div className="flex-1 min-w-0 pt-1">
+                    <p className="text-sm text-slate-200">
+                      {getLocalizedText(objective)}
+                    </p>
+                  </div>
                 </div>
               ))}
-            </CollapsibleContent>
-          </Collapsible>
-
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-400">Progress</span>
-              <span className="text-cyan-400">{Math.round(progressPercentage)}%</span>
             </div>
-            <Progress value={progressPercentage} className="h-2" />
           </div>
 
-          {quest.requiredItemIds && quest.requiredItemIds.length > 0 && (
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-full justify-between text-slate-400 hover:text-cyan-400">
-                  Requirements
-                  <ChevronDown size={14} />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2 space-y-1">
-                {quest.requiredItemIds.map((req, i) => (
-                  <div key={i} className="text-sm text-slate-300 pl-4">
-                    • {req.quantity}x {req.itemId}
-                  </div>
-                ))}
-              </CollapsibleContent>
-            </Collapsible>
+          {/* Requirements */}
+          {quest.requirements && quest.requirements.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                <span className="w-1 h-4 bg-orange-400 rounded-full" />
+                Required Items
+              </h4>
+              
+              <div className="grid grid-cols-1 gap-2">
+                <TooltipProvider delayDuration={300}>
+                  {quest.requirements.map((req, i) => (
+                    <Tooltip key={i}>
+                      <TooltipTrigger asChild>
+                        <div 
+                          className="flex items-center gap-3 p-3 rounded-lg border transition-all bg-orange-500/5 border-orange-500/20 hover:border-orange-500/40 cursor-pointer"
+                        >
+                          {/* Item Icon */}
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center border flex-shrink-0 bg-orange-500/10 border-orange-500/20">
+                            {req.item?.type === "Unknown" ? (
+                              <CircleHelp className="text-orange-400" size={20} />
+                            ) : req.item?.imageFilename ? (
+                              <img 
+                                src={req.item.imageFilename} 
+                                alt={req.item ? getLocalizedText(req.item.name) : req.itemId} 
+                                className="w-full h-full object-cover rounded-lg" 
+                              />
+                            ) : (
+                              <span className="text-orange-600 text-xl">📦</span>
+                            )}
+                          </div>
+
+                          {/* Item Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-200 truncate">
+                              {req.item ? getLocalizedText(req.item.name) : req.itemId}
+                            </p>
+                            {req.item?.type && (
+                              <p className="text-xs text-slate-400">
+                                {req.item.type}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Quantity */}
+                          <div className="text-right">
+                            <p className="text-sm font-bold text-orange-400">
+                              {req.quantity}x
+                            </p>
+                          </div>
+                        </div>
+                      </TooltipTrigger>
+                      {req.item && req.item.type !== "Unknown" && (
+                        <TooltipContent side="right" align="start" className="p-0 border-0 bg-transparent">
+                          <ItemTooltip item={req.item} />
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  ))}
+                </TooltipProvider>
+              </div>
+            </div>
           )}
 
-          {quest.rewardItemIds && quest.rewardItemIds.length > 0 && (
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-full justify-between text-slate-400 hover:text-cyan-400">
-                  Rewards
-                  <ChevronDown size={14} />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2 space-y-1">
-                {quest.rewardItemIds.map((reward, i) => (
-                  <div key={i} className="text-sm text-slate-300 pl-4">
-                    • {reward.quantity}x {reward.itemId}
-                  </div>
-                ))}
-              </CollapsibleContent>
-            </Collapsible>
+          {/* Rewards */}
+          {quest.rewards && quest.rewards.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                <span className="w-1 h-4 bg-emerald-400 rounded-full" />
+                Rewards
+              </h4>
+              
+              <div className="grid grid-cols-1 gap-2">
+                <TooltipProvider delayDuration={300}>
+                  {quest.rewards.map((reward, i) => (
+                    <Tooltip key={i}>
+                      <TooltipTrigger asChild>
+                        <div 
+                          className="flex items-center gap-3 p-3 rounded-lg border transition-all bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40 cursor-pointer"
+                        >
+                          {/* Item Icon */}
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center border flex-shrink-0 bg-emerald-500/10 border-emerald-500/20">
+                            {reward.item?.type === "Unknown" ? (
+                              <CircleHelp className="text-orange-400" size={20} />
+                            ) : reward.item?.imageFilename ? (
+                              <img 
+                                src={reward.item.imageFilename} 
+                                alt={reward.item ? getLocalizedText(reward.item.name) : reward.itemId} 
+                                className="w-full h-full object-cover rounded-lg" 
+                              />
+                            ) : (
+                              <span className="text-orange-600 text-xl">📦</span>
+                            )}
+                          </div>
+
+                          {/* Item Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-200 truncate">
+                              {reward.item ? getLocalizedText(reward.item.name) : reward.itemId}
+                            </p>
+                            {reward.item?.type && (
+                              <p className="text-xs text-slate-400">
+                                {reward.item.type}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Quantity */}
+                          <div className="text-right">
+                            <p className="text-sm font-bold text-emerald-400">
+                              {reward.quantity}x
+                            </p>
+                          </div>
+                        </div>
+                      </TooltipTrigger>
+                      {reward.item && reward.item.type !== "Unknown" && (
+                        <TooltipContent side="right" align="start" className="p-0 border-0 bg-transparent">
+                          <ItemTooltip item={reward.item} />
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  ))}
+                </TooltipProvider>
+              </div>
+            </div>
           )}
+
+          {/* Quest Completion Toggle */}
+          <Button
+            onClick={onToggleComplete}
+            className={`w-full ${
+              isCompleted
+                ? "bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border-blue-500/50"
+                : "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border-cyan-500/50"
+            } border`}
+          >
+            <CheckCircle2 size={16} className="mr-2" />
+            {isCompleted ? "Mark as Incomplete" : "Mark as Complete"}
+          </Button>
         </div>
       </Card>
     </motion.div>
