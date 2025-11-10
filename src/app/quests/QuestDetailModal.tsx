@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -12,10 +11,9 @@ import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
 import { ItemTooltip } from '~/components/ui/item-tooltip';
-import { CheckCircle2, User, X } from 'lucide-react';
+import { CheckCircle2, CircleHelp, User, X } from 'lucide-react';
 import type { QuestWithRelations } from '~/lib/types';
 import { getLocalizedText } from '~/lib/utils';
-import Image from 'next/image';
 
 type QuestStatus = "active" | "locked" | "completed";
 
@@ -116,17 +114,20 @@ export default function QuestDetailModal({
                     <Tooltip key={i}>
                       <TooltipTrigger asChild>
                         <div 
-                          className="flex items-center gap-3 p-3 rounded-lg border transition-all bg-orange-500/5 border-orange-500/20 hover:border-orange-500/40 cursor-pointer"
+                          className="flex items-center gap-3 p-3 rounded-lg border transition-all bg-orange-500/5 border-orange-500/20 hover:border-orange-500/40 cursor-pointer "
                         >
-                          <div className="w-10 h-10 bg-slate-800/50 rounded flex items-center justify-center border border-orange-500/20 flex-shrink-0">
-                            {req.item && (
-                              <Image 
-                                src={`/items/${req.item.imageFilename}`}
-                                alt={getLocalizedText(req.item.name)}
-                                width={32}
-                                height={32}
-                                className="object-contain"
+                            {/* Item Icon */}
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center border flex-shrink-0 bg-orange-500/10 border-orange-500/20">
+                            {req.item?.type === "Unknown" ? (
+                              <CircleHelp className="text-orange-400" size={20} />
+                            ) : req.item?.imageFilename ? (
+                              <img 
+                                src={req.item.imageFilename} 
+                                alt={req.item ? getLocalizedText(req.item.name) : req.itemId} 
+                                className="w-full h-full object-cover rounded-lg" 
                               />
+                            ) : (
+                              <span className="text-orange-600 text-xl">📦</span>
                             )}
                           </div>
                           
@@ -142,8 +143,8 @@ export default function QuestDetailModal({
                           </Badge>
                         </div>
                       </TooltipTrigger>
-                      {req.item && (
-                        <TooltipContent side="right" className="p-0 border-0 bg-transparent">
+                      {req.item && req.item.type !== "Unknown" && (
+                        <TooltipContent side="top" className="p-0 border-0 bg-transparent">
                           <ItemTooltip item={req.item} />
                         </TooltipContent>
                       )}
@@ -171,15 +172,20 @@ export default function QuestDetailModal({
                           className="flex items-center gap-3 p-3 rounded-lg border transition-all bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40 cursor-pointer"
                         >
                           <div className="w-10 h-10 bg-slate-800/50 rounded flex items-center justify-center border border-emerald-500/20 flex-shrink-0">
-                            {reward.item && (
-                              <Image 
-                                src={`/items/${reward.item.imageFilename}`}
-                                alt={getLocalizedText(reward.item.name)}
-                                width={32}
-                                height={32}
-                                className="object-contain"
+                            {/* Item Icon */}
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center border flex-shrink-0 bg-orange-500/10 border-orange-500/20">
+                            {reward.item?.type === "Unknown" ? (
+                              <CircleHelp className="text-orange-400" size={20} />
+                            ) : reward.item?.imageFilename ? (
+                              <img 
+                                src={reward.item.imageFilename} 
+                                alt={reward.item ? getLocalizedText(reward.item.name) : reward.itemId} 
+                                className="w-full h-full object-cover rounded-lg" 
                               />
+                            ) : (
+                              <span className="text-orange-600 text-xl">📦</span>
                             )}
+                          </div>
                           </div>
                           
                           <div className="flex-1 min-w-0">
@@ -194,8 +200,8 @@ export default function QuestDetailModal({
                           </Badge>
                         </div>
                       </TooltipTrigger>
-                      {reward.item && (
-                        <TooltipContent side="right" className="p-0 border-0 bg-transparent">
+                      {reward.item && reward.item.type !== "Unknown" && (
+                        <TooltipContent side="top" className="p-0 border-0 bg-transparent">
                           <ItemTooltip item={reward.item} />
                         </TooltipContent>
                       )}

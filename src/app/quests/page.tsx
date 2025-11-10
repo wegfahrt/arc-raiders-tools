@@ -9,10 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ItemTooltip } from "@/components/ui/item-tooltip";
-import { Search, Grid3x3, GitBranch, ChevronDown, User, CheckCircle2, CircleHelp } from "lucide-react";
+import { Search, Grid3x3, GitBranch, User, CheckCircle2, CircleHelp } from "lucide-react";
 import type { QuestWithRelations } from "@/lib/types";
 import { getAllQuests } from "~/server/db/queries/quests";
 import { getLocalizedText } from "~/lib/utils";
@@ -75,8 +74,6 @@ export default function Quests() {
       nextQuestIds
     };
   });
-
-  console.log("Quests with status:", quests);
 
   const filteredQuests = quests
     .filter(quest => {
@@ -150,7 +147,9 @@ export default function Quests() {
         </div>
 
         {/* Tabs */}
+        
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+          {viewMode === "cards" && (
           <TabsList className="bg-slate-900/50 border border-cyan-500/20">
             <TabsTrigger 
               value="all"
@@ -177,6 +176,7 @@ export default function Quests() {
               Completed ({statusCounts.completed})
             </TabsTrigger>
           </TabsList>
+          )}
 
           <TabsContent value={activeTab} className="mt-6">
             {viewMode === "cards" ? (
