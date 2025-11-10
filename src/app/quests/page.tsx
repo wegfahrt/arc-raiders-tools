@@ -16,6 +16,8 @@ import { Search, Grid3x3, GitBranch, ChevronDown, User, CheckCircle2, CircleHelp
 import type { QuestWithRelations } from "@/lib/types";
 import { getAllQuests } from "~/server/db/queries/quests";
 import { getLocalizedText } from "~/lib/utils";
+import QuestFlowChart from "./QuestFlowChart";
+import QuestDetailModal from "./QuestDetailModal";
 
 type QuestStatus = "active" | "locked" | "completed";
 
@@ -29,6 +31,8 @@ export default function Quests() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"cards" | "flowchart">("cards");
   const [activeTab, setActiveTab] = useState<"all" | "active" | "locked" | "completed">("all");
+  const [selectedQuest, setSelectedQuest] = useState<QuestWithStatus | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: questsData = [] } = useQuery({
     queryKey: ['quests'],
@@ -36,6 +40,18 @@ export default function Quests() {
   });
 
   const { completedQuests, toggleQuest } = useGameStore();
+
+  // Handler for opening quest details modal
+  const handleQuestClick = (quest: QuestWithStatus) => {
+    setSelectedQuest(quest);
+    setIsModalOpen(true);
+  };
+
+  // Handler for closing modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedQuest(null);
+  };
 
   // Add status to quests based on completedQuests
   const quests: QuestWithStatus[] = questsData.map(quest => {
@@ -59,6 +75,8 @@ export default function Quests() {
       nextQuestIds
     };
   });
+
+  console.log("Quests with status:", quests);
 
   const filteredQuests = quests
     .filter(quest => {
@@ -175,15 +193,23 @@ export default function Quests() {
                 ))}
               </div>
             ) : (
-              <Card className="bg-slate-900/50 border-cyan-500/20 p-8 min-h-[400px] flex items-center justify-center">
-                <div className="text-center text-slate-400">
-                  <GitBranch size={48} className="mx-auto mb-4 opacity-50" />
-                  <p>Flowchart view coming soon!</p>
-                </div>
-              </Card>
+              <QuestFlowChart
+                quests={filteredQuests}
+                onQuestClick={handleQuestClick}
+                onToggleComplete={(questId) => toggleQuest(questId, questsData)}
+              />
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Quest Detail Modal */}
+        <QuestDetailModal
+          quest={selectedQuest}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onToggleComplete={(questId) => toggleQuest(questId, questsData)}
+          allQuests={questsData}
+        />
       </div>
     </div>
   );

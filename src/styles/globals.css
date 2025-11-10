@@ -101,5 +101,106 @@ body {
   [data-state="closed"] {
     animation: tooltip-out 150ms ease-in;
   }
+
+  /* React Flow Custom Styles */
+  .react-flow {
+    @apply bg-slate-950;
+  }
+
+  .react-flow__node {
+    @apply cursor-pointer;
+  }
+
+  .react-flow__handle {
+    @apply !bg-cyan-400 !border-2 !border-slate-900;
+  }
+
+  .react-flow__handle:hover {
+    @apply !bg-cyan-300;
+  }
+
+  /* Edge styles */
+  .react-flow__edge-path {
+    @apply transition-all duration-300;
+  }
+
+  .react-flow__edge.animated path {
+    @apply animate-pulse;
+  }
+
+  /* Controls styling */
+  .react-flow__controls {
+    @apply !bg-slate-900/90 !border-cyan-500/30 !shadow-lg !rounded-lg;
+  }
+
+  .react-flow__controls-button {
+    @apply !bg-slate-800 !border-cyan-500/30 !text-cyan-400 transition-all duration-200;
+  }
+
+  .react-flow__controls-button:hover {
+    @apply !bg-cyan-500/20 !border-cyan-500/50;
+  }
+
+  .react-flow__controls-button svg {
+    @apply !fill-current;
+  }
+
+  /* MiniMap styling */
+  .react-flow__minimap {
+    @apply !bg-slate-900/90 !border-cyan-500/30 !rounded-lg !shadow-lg;
+  }
+
+  .react-flow__minimap-mask {
+    @apply !fill-slate-950/80;
+  }
+
+  .react-flow__minimap-node {
+    @apply !stroke-cyan-500/30 !stroke-2;
+  }
+
+  /* Background pattern */
+  .react-flow__background {
+    @apply !bg-slate-950;
+  }
+
+  /* Panel styling */
+  .react-flow__panel {
+    @apply !m-4;
+  }
+
+  /* Attribution */
+  .react-flow__attribution {
+    @apply !hidden;
+  }
+
+  /* Node selection */
+  .react-flow__node.selected {
+    @apply ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-950;
+  }
+
+  /* Edge selection */
+  .react-flow__edge.selected .react-flow__edge-path {
+    @apply !stroke-cyan-400;
+  }
+
+  /* Pane interactions */
+  .react-flow__pane {
+    @apply cursor-grab active:cursor-grabbing;
+  }
+
+  /* Node dragging */
+  .react-flow__node.dragging {
+    @apply opacity-50;
+  }
+
+  /* Connection line */
+  .react-flow__connectionline {
+    @apply !stroke-cyan-400 !stroke-2;
+  }
+
+  /* Zoom transitions */
+  .react-flow__renderer {
+    @apply transition-transform duration-300;
+  }
 }
 
