@@ -342,7 +342,7 @@ function WorkstationCard({
                         size="lg"
                       >
                         <Zap className="mr-2" size={18} />
-                        Upgrade to Level {level.level + 1}
+                        Upgrade to Level {level.level}
                       </Button>
                     </motion.div>
                   )}

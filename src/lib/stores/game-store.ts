@@ -92,15 +92,14 @@ export const useGameStore = create<GameState>()(
         })),
 
       workstationLevels: {
-        scrappy: 2,
-        weapon_bench: 1,
-        equipment_bench: 1,
-        explosives_bench: 1,
-        med_station: 1,
-        refiner: 1,
-        stash: 5,
-        utility_bench: 2,
-        workbench: 1
+        scrappy: 1,
+        weapon_bench: 0,
+        equipment_bench: 0,
+        explosives_bench: 0,
+        med_station: 0,
+        refiner: 0,
+        stash: 0,
+        utility_bench: 0,
       },
       upgradeWorkstation: (workstationId) =>
         set((state) => ({
