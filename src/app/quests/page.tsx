@@ -17,19 +17,14 @@ import { getAllQuests } from "~/server/db/queries/quests";
 import { getLocalizedText } from "~/lib/utils";
 import QuestFlowChart from "./QuestFlowChart";
 import QuestDetailModal from "./QuestDetailModal";
+import QuestCard from "./QuestCard";
+import type { QuestWithStatus, QuestStatus } from "@/lib/types";
 
-type QuestStatus = "active" | "locked" | "completed";
-
-interface QuestWithStatus extends QuestWithRelations {
-  status: QuestStatus;
-  previousQuestIds: string[];
-  nextQuestIds: string[];
-}
 
 export default function Quests() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"cards" | "flowchart">("cards");
-  const [activeTab, setActiveTab] = useState<"all" | "active" | "locked" | "completed">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "active" | "locked" | "completed">("active");
   const [selectedQuest, setSelectedQuest] = useState<QuestWithStatus | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -152,12 +147,6 @@ export default function Quests() {
           {viewMode === "cards" && (
           <TabsList className="bg-slate-900/50 border border-cyan-500/20">
             <TabsTrigger 
-              value="all"
-              className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-300 data-[state=active]:border-cyan-500/50 data-[state=active]:shadow-[0_0_10px_rgba(6,182,212,0.3)] hover:bg-slate-800/50 hover:text-cyan-400 transition-all duration-200"
-            >
-              All ({statusCounts.all})
-            </TabsTrigger>
-            <TabsTrigger 
               value="active"
               className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-300 data-[state=active]:border-cyan-500/50 data-[state=active]:shadow-[0_0_10px_rgba(6,182,212,0.3)] hover:bg-slate-800/50 hover:text-cyan-400 transition-all duration-200"
             >
@@ -175,12 +164,18 @@ export default function Quests() {
             >
               Completed ({statusCounts.completed})
             </TabsTrigger>
+            <TabsTrigger 
+              value="all"
+              className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-300 data-[state=active]:border-cyan-500/50 data-[state=active]:shadow-[0_0_10px_rgba(6,182,212,0.3)] hover:bg-slate-800/50 hover:text-cyan-400 transition-all duration-200"
+            >
+              All ({statusCounts.all})
+            </TabsTrigger>
           </TabsList>
           )}
 
           <TabsContent value={activeTab} className="mt-6">
             {viewMode === "cards" ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
                 {filteredQuests.map((quest, index) => (
                   <QuestCard 
                     key={quest.id} 
@@ -189,6 +184,7 @@ export default function Quests() {
                     allQuests={questsData}
                     isCompleted={completedQuests.includes(quest.id)}
                     onToggleComplete={() => toggleQuest(quest.id, questsData)}
+                    onQuestNavigate={handleQuestClick}
                   />
                 ))}
               </div>
@@ -216,223 +212,3 @@ export default function Quests() {
     </div>
   );
 }
-
-function QuestCard({ 
-  quest, 
-  index,
-  allQuests,
-  isCompleted,
-  onToggleComplete
-}: { 
-  quest: QuestWithStatus; 
-  index: number;
-  allQuests: QuestWithRelations[];
-  isCompleted: boolean;
-  onToggleComplete: () => void;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.05 }}
-    >
-      <Card className="bg-slate-900/50 border-cyan-500/20 hover:border-cyan-500/40 transition-all duration-300 p-6 hover:shadow-[0_0_20px_rgba(6,182,212,0.15)]">
-        <div className="space-y-4">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-cyan-300">{getLocalizedText(quest.name)}</h3>
-              <div className="flex items-center gap-2 mt-1">
-                <User size={14} className="text-slate-400" />
-                <span className="text-sm text-slate-400">{quest.trader}</span>
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <Badge className={statusColors[quest.status]}>
-                {quest.status}
-              </Badge>
-              <Badge variant="outline" className="text-cyan-400 border-cyan-500/30">
-                {quest.xp} XP
-              </Badge>
-            </div>
-          </div>
-
-          {/* Objectives */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-              <span className="w-1 h-4 bg-cyan-400 rounded-full" />
-              Objectives ({quest.objectives.length})
-            </h4>
-            
-            <div className="grid grid-cols-1 gap-2">
-              {quest.objectives.map((objective, i) => (
-                <div 
-                  key={i} 
-                  className="flex items-start gap-3 p-3 rounded-lg border transition-all bg-cyan-500/5 border-cyan-500/20 hover:border-cyan-500/40"
-                >
-                  {/* Number Badge */}
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center border flex-shrink-0 bg-cyan-500/10 border-cyan-500/20">
-                    <span className="text-cyan-400 font-bold text-sm">{i + 1}</span>
-                  </div>
-
-                  {/* Objective Text */}
-                  <div className="flex-1 min-w-0 pt-1">
-                    <p className="text-sm text-slate-200">
-                      {getLocalizedText(objective)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Requirements */}
-          {quest.requirements && quest.requirements.length > 0 && (
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-                <span className="w-1 h-4 bg-orange-400 rounded-full" />
-                Required Items
-              </h4>
-              
-              <div className="grid grid-cols-1 gap-2">
-                <TooltipProvider delayDuration={300}>
-                  {quest.requirements.map((req, i) => (
-                    <Tooltip key={i}>
-                      <TooltipTrigger asChild>
-                        <div 
-                          className="flex items-center gap-3 p-3 rounded-lg border transition-all bg-orange-500/5 border-orange-500/20 hover:border-orange-500/40 cursor-pointer"
-                        >
-                          {/* Item Icon */}
-                          <div className="w-10 h-10 rounded-lg flex items-center justify-center border flex-shrink-0 bg-orange-500/10 border-orange-500/20">
-                            {req.item?.type === "Unknown" ? (
-                              <CircleHelp className="text-orange-400" size={20} />
-                            ) : req.item?.imageFilename ? (
-                              <img 
-                                src={req.item.imageFilename} 
-                                alt={req.item ? getLocalizedText(req.item.name) : req.itemId} 
-                                className="w-full h-full object-cover rounded-lg" 
-                              />
-                            ) : (
-                              <span className="text-orange-600 text-xl">📦</span>
-                            )}
-                          </div>
-
-                          {/* Item Info */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-200 truncate">
-                              {req.item ? getLocalizedText(req.item.name) : req.itemId}
-                            </p>
-                            {req.item?.type && (
-                              <p className="text-xs text-slate-400">
-                                {req.item.type}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Quantity */}
-                          <div className="text-right">
-                            <p className="text-sm font-bold text-orange-400">
-                              {req.quantity}x
-                            </p>
-                          </div>
-                        </div>
-                      </TooltipTrigger>
-                      {req.item && req.item.type !== "Unknown" && (
-                        <TooltipContent side="right" align="start" className="p-0 border-0 bg-transparent">
-                          <ItemTooltip item={req.item} />
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  ))}
-                </TooltipProvider>
-              </div>
-            </div>
-          )}
-
-          {/* Rewards */}
-          {quest.rewards && quest.rewards.length > 0 && (
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-                <span className="w-1 h-4 bg-emerald-400 rounded-full" />
-                Rewards
-              </h4>
-              
-              <div className="grid grid-cols-1 gap-2">
-                <TooltipProvider delayDuration={300}>
-                  {quest.rewards.map((reward, i) => (
-                    <Tooltip key={i}>
-                      <TooltipTrigger asChild>
-                        <div 
-                          className="flex items-center gap-3 p-3 rounded-lg border transition-all bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40 cursor-pointer"
-                        >
-                          {/* Item Icon */}
-                          <div className="w-10 h-10 rounded-lg flex items-center justify-center border flex-shrink-0 bg-emerald-500/10 border-emerald-500/20">
-                            {reward.item?.type === "Unknown" ? (
-                              <CircleHelp className="text-orange-400" size={20} />
-                            ) : reward.item?.imageFilename ? (
-                              <img 
-                                src={reward.item.imageFilename} 
-                                alt={reward.item ? getLocalizedText(reward.item.name) : reward.itemId} 
-                                className="w-full h-full object-cover rounded-lg" 
-                              />
-                            ) : (
-                              <span className="text-orange-600 text-xl">📦</span>
-                            )}
-                          </div>
-
-                          {/* Item Info */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-200 truncate">
-                              {reward.item ? getLocalizedText(reward.item.name) : reward.itemId}
-                            </p>
-                            {reward.item?.type && (
-                              <p className="text-xs text-slate-400">
-                                {reward.item.type}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Quantity */}
-                          <div className="text-right">
-                            <p className="text-sm font-bold text-emerald-400">
-                              {reward.quantity}x
-                            </p>
-                          </div>
-                        </div>
-                      </TooltipTrigger>
-                      {reward.item && reward.item.type !== "Unknown" && (
-                        <TooltipContent side="right" align="start" className="p-0 border-0 bg-transparent">
-                          <ItemTooltip item={reward.item} />
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  ))}
-                </TooltipProvider>
-              </div>
-            </div>
-          )}
-
-          {/* Quest Completion Toggle */}
-          <Button
-            onClick={onToggleComplete}
-            className={`w-full ${
-              isCompleted
-                ? "bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border-blue-500/50"
-                : "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border-cyan-500/50"
-            } border`}
-          >
-            <CheckCircle2 size={16} className="mr-2" />
-            {isCompleted ? "Mark as Incomplete" : "Mark as Complete"}
-          </Button>
-        </div>
-      </Card>
-    </motion.div>
-  );
-}
-
-const statusColors = {
-  active: "bg-cyan-500/20 text-cyan-400 border-cyan-500/50",
-  locked: "bg-orange-500/20 text-orange-400 border-orange-500/50",
-  completed: "bg-blue-500/20 text-blue-400 border-blue-500/50"
-};

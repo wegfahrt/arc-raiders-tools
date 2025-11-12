@@ -612,7 +612,7 @@ export default function Calculator() {
                       value={mat.quantity}
                       onChange={(e) => {
                         const qty = parseInt(e.target.value, 10) || 0;
-                        setCustomMaterials(prev => prev.map((m, i) => i === idx ? { ...m, quantity: qty } : m));
+                        setCustomMaterials(prev => prev.map((m, i) => i === idx ? { ...m, quantity: qty, moduleId: "custom", level: 1 } : m));
                       }}
                       placeholder="Qty"
                       className="w-20 bg-slate-800/50 border-cyan-500/20 text-sm"

@@ -173,8 +173,12 @@ export interface Quest {
   nextQuestIds?: string[];
 }
 
-export interface QuestStatus extends Quest {
-  status: "active" | "locked" | "completed"
+export type QuestStatus = "active" | "locked" | "completed";
+
+export interface QuestWithStatus extends QuestWithRelations {
+  status: QuestStatus;
+  previousQuestIds: string[];
+  nextQuestIds: string[];
 }
 
 /**
