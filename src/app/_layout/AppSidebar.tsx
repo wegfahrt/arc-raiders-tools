@@ -18,7 +18,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 
 const navItems = [
-  { path: "/", icon: LayoutDashboard, label: "Dashboard", soon: true },
+  { path: "/", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/quests", icon: ScrollText, label: "Quests" },
   { path: "/items", icon: Package, label: "Items" },
   { path: "/workstations", icon: Hammer, label: "Workstations"},

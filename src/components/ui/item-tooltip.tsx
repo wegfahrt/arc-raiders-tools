@@ -1,11 +1,13 @@
 import { getLocalizedText } from "~/lib/utils";
 import type { Item } from "~/lib/types";
+import type { ReactNode } from "react";
 
 interface ItemTooltipProps {
   item: Item;
+  additionalContent?: ReactNode;
 }
 
-export function ItemTooltip({ item }: ItemTooltipProps) {
+export function ItemTooltip({ item, additionalContent }: ItemTooltipProps) {
   const rarityColors = {
     Common: "bg-[oklch(0.60_0.02_270)] text-white",
     Uncommon: "bg-[oklch(0.92_0.24_130)] text-slate-900",
@@ -90,6 +92,9 @@ export function ItemTooltip({ item }: ItemTooltipProps) {
               </div>
           </div>
         )}
+
+        {/* Additional content */}
+        {additionalContent && additionalContent}
       </div>
     </div>
   );

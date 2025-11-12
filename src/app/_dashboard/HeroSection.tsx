@@ -1,41 +1,76 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Target, CheckCircle2, Package } from "lucide-react";
+import { Target, Package, TrendingUp, Hammer } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { questsApi } from "@/lib/services/api";
+import { getAllQuests } from "~/server/db/queries/quests";
+import { getAllHideoutModules } from "~/server/db/queries/workstations";
 import { useGameStore } from "@/lib/stores/game-store";
+import type { WorkstationLevel } from "~/lib/types";
 
 export function HeroSection() {
   const { data: quests = [] } = useQuery({
     queryKey: ['quests'],
-    queryFn: questsApi.getAll
+    queryFn: getAllQuests
   });
 
-  const { questProgress } = useGameStore();
+  const { data: workstations = [] } = useQuery({
+    queryKey: ['workstations'],
+    queryFn: getAllHideoutModules
+  });
+
+  const { completedQuests, workstationLevels } = useGameStore();
 
   const totalQuests = quests.length;
-  const completedQuests = quests.filter(q => q.status === "completed").length;
-  const completionPercentage = totalQuests > 0 ? Math.round((completedQuests / totalQuests) * 100) : 0;
+  const completedQuestsCount = completedQuests.length;
+
+  // Calculate total workstation levels across all workstations
+  const totalWorkstationLevels = workstations.reduce((total, ws) => {
+    return total + ws.levels.length;
+  }, 0);
+
+  const completedWorkstationLevels = Object.values(workstationLevels).reduce((sum, level) => sum + level, 0);
+
+  // Calculate overall completion rate
+  // Each quest completion = 1 point, each workstation level = 1 point
+  // This structure makes it easy to add project phases in the future
+  const totalProgressPoints = totalQuests + totalWorkstationLevels; // Add project phases here in future
+  const completedProgressPoints = completedQuestsCount + completedWorkstationLevels; // Add completed project phases here in future
+  const overallCompletionPercentage = totalProgressPoints > 0 
+    ? Math.round((completedProgressPoints / totalProgressPoints) * 100) 
+    : 0;
+
+  const questCompletionPercentage = totalQuests > 0 ? Math.round((completedQuestsCount / totalQuests) * 100) : 0;
+  const workstationCompletionPercentage = totalWorkstationLevels > 0 ? Math.round((completedWorkstationLevels / totalWorkstationLevels) * 100) : 0;
 
   const stats = [
     {
       icon: Target,
       label: "Quest Progress",
-      value: `${completedQuests}/${totalQuests}`,
+      value: `${completedQuestsCount}/${totalQuests}`,
+      subValue: `${questCompletionPercentage}% Complete`,
       color: "cyan"
     },
     {
-      icon: CheckCircle2,
-      label: "Completion Rate",
-      value: `${completionPercentage}%`,
+      icon: Hammer,
+      label: "Workstations",
+      value: `${completedWorkstationLevels}/${totalWorkstationLevels}`,
+      subValue: `${workstationCompletionPercentage}% Complete`,
       color: "blue"
     },
     {
       icon: Package,
-      label: "Inventory Value",
+      label: "Stash Value",
       value: "Coming Soon",
+      subValue: "Inventory worth",
       color: "purple"
+    },
+    {
+      icon: TrendingUp,
+      label: "Overall Progress",
+      value: `${overallCompletionPercentage}%`,
+      subValue: `${completedProgressPoints}/${totalProgressPoints} milestones`,
+      color: "green"
     }
   ];
 
@@ -80,7 +115,7 @@ export function HeroSection() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
@@ -88,23 +123,17 @@ export function HeroSection() {
                 key={stat.label}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="bg-slate-900/50 backdrop-blur-sm border border-cyan-500/20 rounded-lg p-6 hover:border-cyan-500/40 transition-all duration-300 hover:shadow-[0_0_20px_rgba(6,182,212,0.2)]"
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+                className="bg-slate-900/50 backdrop-blur-sm border border-cyan-500/20 rounded-lg p-6 hover:border-cyan-500/40 transition-all duration-300"
               >
                 <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-lg bg-${stat.color}-500/10 border border-${stat.color}-500/30`}>
-                    <Icon className={`text-${stat.color}-400`} size={24} />
+                  <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30">
+                    <Icon className="text-cyan-400" size={24} />
                   </div>
                   <div>
                     <p className="text-slate-400 text-sm">{stat.label}</p>
-                    <motion.p 
-                      className="text-2xl font-bold text-cyan-300"
-                      initial={{ scale: 1 }}
-                      animate={{ scale: [1, 1.05, 1] }}
-                      transition={{ duration: 0.3, delay: index * 0.1 + 0.6 }}
-                    >
-                      {stat.value}
-                    </motion.p>
+                    <p className="text-2xl font-bold text-cyan-300">{stat.value}</p>
+                    <p className="text-xs text-slate-500 mt-1">{stat.subValue}</p>
                   </div>
                 </div>
               </motion.div>
