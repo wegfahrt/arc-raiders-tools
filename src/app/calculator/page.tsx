@@ -23,6 +23,7 @@ import { getAllProjects } from "~/server/db/queries/projects";
 import { getLocalizedText } from "~/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { ItemTooltip } from "~/components/ui/item-tooltip";
+import { useGameStore } from "~/lib/stores/game-store";
 
 interface SavedCalculation {
   id: string;
@@ -72,6 +73,11 @@ export default function Calculator() {
     queryFn: getAllProjects,
     staleTime: 1000 * 60 * 10 // 10 minutes
   });
+
+  // Get game store helper methods
+  const getIncompleteQuests = useGameStore(state => state.getIncompleteQuests);
+  const getIncompleteUpgrades = useGameStore(state => state.getIncompleteUpgrades);
+  const getIncompleteProjectPhases = useGameStore(state => state.getIncompleteProjectPhases);
 
   // Load saved calculations from localStorage on mount
   useEffect(() => {
@@ -180,6 +186,22 @@ export default function Calculator() {
       // Select all
       setSelectedProjectPhases(allPhaseIds);
     }
+  };
+
+  // Handler functions for selecting incomplete items
+  const selectIncompleteQuests = () => {
+    const incompleteQuestIds = getIncompleteQuests(quests.map(q => q.id));
+    setSelectedQuests(incompleteQuestIds);
+  };
+
+  const selectIncompleteUpgrades = () => {
+    const incompleteUpgradeIds = getIncompleteUpgrades(workstations);
+    setSelectedUpgrades(incompleteUpgradeIds);
+  };
+
+  const selectIncompleteProjectPhases = () => {
+    const incompletePhaseIds = getIncompleteProjectPhases(allProjects);
+    setSelectedProjectPhases(incompletePhaseIds);
   };
 
   // Validate that selected items still exist in the data
@@ -409,10 +431,12 @@ export default function Calculator() {
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-cyan-400 mb-6 flex items-center gap-2">
-          <CalcIcon size={32} />
-          Material Calculator
-        </h1>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <h1 className="text-3xl font-bold text-cyan-400 flex items-center gap-2">
+            <CalcIcon size={32} />
+            Material Calculator
+          </h1>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Panel - Selections */}
@@ -421,14 +445,24 @@ export default function Calculator() {
             <Card className="bg-slate-900/50 border-cyan-500/20 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-cyan-300">Select Quests</h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleAllQuests}
-                  className="text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
-                >
-                  {selectedQuests.length === quests.length ? 'Deselect All' : 'Select All'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={selectIncompleteQuests}
+                    className="text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                  >
+                    Incomplete
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleAllQuests}
+                    className="text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                  >
+                    {selectedQuests.length === quests.length ? 'Deselect All' : 'Select All'}
+                  </Button>
+                </div>
               </div>
               <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
                 {quests.map(quest => (
@@ -456,14 +490,24 @@ export default function Calculator() {
             <Card className="bg-slate-900/50 border-cyan-500/20 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-cyan-300">Select Upgrades</h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleAllUpgrades}
-                  className="text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
-                >
-                  {selectedUpgrades.length === workstations.flatMap(ws => ws.levels).length ? 'Deselect All' : 'Select All'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={selectIncompleteUpgrades}
+                    className="text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                  >
+                    Incomplete
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleAllUpgrades}
+                    className="text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                  >
+                    {selectedUpgrades.length === workstations.flatMap(ws => ws.levels).length ? 'Deselect All' : 'Select All'}
+                  </Button>
+                </div>
               </div>
               <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
                 {workstations.map(ws => (
@@ -500,14 +544,24 @@ export default function Calculator() {
             <Card className="bg-slate-900/50 border-cyan-500/20 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-cyan-300">Select Projects</h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleAllProjectPhases}
-                  className="text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
-                >
-                  {selectedProjectPhases.length === allProjects.flatMap(p => p.phases).length ? 'Deselect All' : 'Select All'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={selectIncompleteProjectPhases}
+                    className="text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                  >
+                    Incomplete
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleAllProjectPhases}
+                    className="text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                  >
+                    {selectedProjectPhases.length === allProjects.flatMap(p => p.phases).length ? 'Deselect All' : 'Select All'}
+                  </Button>
+                </div>
               </div>
               <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
                 {allProjects.map(project => (

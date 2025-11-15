@@ -15,6 +15,10 @@ interface GameState {
   workstationLevels: Record<string, number>;
   upgradeWorkstation: (workstationId: string) => void;
   
+  // Project phases completion
+  completedProjectPhases: string[];
+  toggleProjectPhase: (phaseId: string) => void;
+  
   // Tracked items
   trackedItems: string[];
   toggleTrackedItem: (itemId: string) => void;
@@ -25,11 +29,16 @@ interface GameState {
     itemViewMode: 'grid' | 'list';
   };
   setPreference: (key: keyof GameState['preferences'], value: any) => void;
+  
+  // Helper methods for calculator
+  getIncompleteQuests: (allQuestIds: string[]) => string[];
+  getIncompleteUpgrades: (allWorkstations: any[]) => string[];
+  getIncompleteProjectPhases: (allProjects: any[]) => string[];
 }
 
 export const useGameStore = create<GameState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       completedQuests: [],
       toggleQuest: (questId, allQuests) =>
         set((state) => {
@@ -109,6 +118,14 @@ export const useGameStore = create<GameState>()(
           }
         })),
 
+      completedProjectPhases: [],
+      toggleProjectPhase: (phaseId) =>
+        set((state) => ({
+          completedProjectPhases: state.completedProjectPhases.includes(phaseId)
+            ? state.completedProjectPhases.filter(id => id !== phaseId)
+            : [...state.completedProjectPhases, phaseId]
+        })),
+
       trackedItems: [],
       toggleTrackedItem: (itemId) =>
         set((state) => ({
@@ -127,7 +144,46 @@ export const useGameStore = create<GameState>()(
             ...state.preferences,
             [key]: value
           }
-        }))
+        })),
+
+      // Helper methods for calculator
+      getIncompleteQuests: (allQuestIds: string[]) => {
+        const { completedQuests } = get();
+        return allQuestIds.filter(id => !completedQuests.includes(id));
+      },
+
+      getIncompleteUpgrades: (allWorkstations: any[]) => {
+        const { workstationLevels } = get();
+        const incompleteUpgrades: string[] = [];
+        
+        allWorkstations.forEach((ws: any) => {
+          const currentLevel = workstationLevels[ws.id] || 0;
+          // Get all levels above current level
+          ws.levels.forEach((level: any, idx: number) => {
+            if (idx >= currentLevel) {
+              incompleteUpgrades.push(`${ws.id}-level-${idx}`);
+            }
+          });
+        });
+        
+        return incompleteUpgrades;
+      },
+
+      getIncompleteProjectPhases: (allProjects: any[]) => {
+        const { completedProjectPhases } = get();
+        const incompletePhases: string[] = [];
+        
+        allProjects.forEach((project: any) => {
+          project.phases.forEach((phase: any) => {
+            const phaseId = `${project.id}-phase-${phase.phase}`;
+            if (!completedProjectPhases.includes(phaseId)) {
+              incompletePhases.push(phaseId);
+            }
+          });
+        });
+        
+        return incompletePhases;
+      },
     }),
     {
       name: 'arc-raiders-storage'
