@@ -39,7 +39,13 @@ export default function Items() {
   const itemTypes = Array.from(new Set(items?.map(item => item.type).filter(type => type !== "" && type !== null)));
   const itemRarities = Array.from(new Set(items?.map(item => item.rarity).filter(rarity => rarity !== "" && rarity !== null)));
   // Get all distinct loot areas from items which are not null or empty strings
-  const lootAreas = Array.from(new Set(items?.map(item => item.foundIn).filter(lootArea => lootArea !== null && lootArea !== "")));
+  const lootAreas = Array.from(new Set(
+    items?.flatMap(item => 
+      item.foundIn 
+        ? item.foundIn.split(',').map(area => area.trim()) 
+        : []
+    ).filter(lootArea => lootArea !== null && lootArea !== "")
+  ));
 
   console.log("data of advanced-electrical-component", items?.find(i => getLocalizedText(i.description).includes("Lets you craft an Advanced Electrical Component")));
 
@@ -47,7 +53,8 @@ export default function Items() {
     const matchesSearch = getLocalizedText(item.name).toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = typeFilter === "all" || item.type === typeFilter;
     const matchesRarity = rarityFilter === "all" || item.rarity === rarityFilter;
-    const matchesLootArea = lootAreaFilter === "all" || item.foundIn === lootAreaFilter;
+    const matchesLootArea = lootAreaFilter === "all" || 
+      (item.foundIn && item.foundIn.split(',').map(area => area.trim()).includes(lootAreaFilter));
     return matchesSearch && matchesType && matchesRarity && matchesLootArea;
   });
 
