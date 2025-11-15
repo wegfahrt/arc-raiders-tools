@@ -432,11 +432,16 @@ export default function Calculator() {
               </div>
               <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
                 {quests.map(quest => (
-                  <div key={quest.id} className="flex items-center gap-3 p-2 rounded bg-[oklch(var(--card-light))] hover:bg-slate-800/50">
+                  <div 
+                    key={quest.id} 
+                    className="flex items-center gap-3 p-2 rounded bg-[oklch(var(--card-light))] hover:bg-slate-800/50 cursor-pointer transition-colors"
+                    onClick={() => toggleQuest(quest.id)}
+                  >
                     <Checkbox
                       checked={selectedQuests.includes(quest.id)}
                       onCheckedChange={() => toggleQuest(quest.id)}
                       className="mt-0.5"
+                      onClick={(e) => e.stopPropagation()}
                     />
                     <div className="flex-1">
                       <p className="text-sm text-slate-300">{getLocalizedText(quest.name)}</p>
@@ -471,10 +476,15 @@ export default function Calculator() {
                       {ws.levels.map((level, idx) => {
                         const upgradeId = `${ws.id}-level-${idx}`;
                         return (
-                          <div key={idx} className="flex items-center gap-3 p-2 rounded hover:bg-slate-800/30">
+                          <div 
+                            key={idx} 
+                            className="flex items-center gap-3 p-2 rounded hover:bg-slate-800/30 cursor-pointer transition-colors"
+                            onClick={() => toggleUpgrade(upgradeId)}
+                          >
                             <Checkbox
                               checked={selectedUpgrades.includes(upgradeId)}
                               onCheckedChange={() => toggleUpgrade(upgradeId)}
+                              onClick={(e) => e.stopPropagation()}
                             />
                             <span className="text-xs text-slate-400">Level {level.level}</span>
                           </div>
@@ -511,10 +521,14 @@ export default function Calculator() {
                         const phaseId = `${project.id}-phase-${phase.phase}`;
                         return (
                           <div key={phase.phase} className="space-y-1">
-                            <div className="flex items-center gap-3 p-2 rounded hover:bg-slate-800/30">
+                            <div 
+                              className="flex items-center gap-3 p-2 rounded hover:bg-slate-800/30 cursor-pointer transition-colors"
+                              onClick={() => toggleProjectPhase(phaseId)}
+                            >
                               <Checkbox
                                 checked={selectedProjectPhases.includes(phaseId)}
                                 onCheckedChange={() => toggleProjectPhase(phaseId)}
+                                onClick={(e) => e.stopPropagation()}
                               />
                               <span className="text-xs text-slate-400">
                                 Phase {phase.phase}: {getLocalizedText(phase.name)}
