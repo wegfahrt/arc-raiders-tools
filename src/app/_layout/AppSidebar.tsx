@@ -29,26 +29,28 @@ const navItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   return (
     <aside 
       className={cn(
-        "hidden fixed z-999 h-full lg:flex flex-col bg-slate-900/95 backdrop-blur-sm border-r border-cyan-500/20 transition-all duration-300",
+        "hidden fixed z-999 h-full lg:flex flex-col bg-slate-900/95 backdrop-blur-sm border-r border-cyan-500/20 transition-all duration-300 overflow-hidden",
         collapsed ? "w-20" : "w-64"
       )}
+      onMouseEnter={() => setCollapsed(false)}
+      onMouseLeave={() => setCollapsed(true)}
     >
-      <div className="p-6 border-b border-cyan-500/20">
+      <Link href="/" className="p-6 border-b border-cyan-500/20 block hover:bg-cyan-500/5 transition-colors">
         <h1 className={cn(
-          "font-bold text-cyan-400 transition-all duration-300",
+          "font-bold text-cyan-400 transition-all duration-300 whitespace-nowrap",
           collapsed ? "text-xl text-center" : "text-2xl"
         )}>
           {collapsed ? "AR" : "Arc Raiders"}
         </h1>
         {!collapsed && (
-          <p className="text-sm text-slate-400 mt-1">Companion App</p>
+          <p className="text-sm text-slate-400 mt-1 whitespace-nowrap">Companion App</p>
         )}
-      </div>
+      </Link>
 
       <nav className="flex-1 p-4 space-y-2">
         {navItems.map((item) => {
