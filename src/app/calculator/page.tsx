@@ -609,6 +609,7 @@ export default function Calculator() {
 
                     <Input
                       type="number"
+                      min={1}
                       value={mat.quantity}
                       onChange={(e) => {
                         const qty = parseInt(e.target.value, 10) || 0;
