@@ -119,6 +119,12 @@ function WorkstationCard({
   // Get the appropriate icon for this workstation
   const WorkstationIcon = workstationIcons[workstation.id] || Wrench;
 
+  const handleUpgrade = () => {
+    onUpgrade();
+    // Switch to the new level tab after upgrade
+    setSelectedLevel((currentLevel + 1).toString());
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -338,7 +344,7 @@ function WorkstationCard({
                     >
                       <Button 
                         className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold shadow-lg shadow-cyan-500/20 border-0"
-                        onClick={onUpgrade}
+                        onClick={handleUpgrade}
                         size="lg"
                       >
                         <Zap className="mr-2" size={18} />
