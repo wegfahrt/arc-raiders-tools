@@ -90,9 +90,6 @@ export function ActiveMissions() {
                       <h3 className="text-lg font-semibold text-cyan-300 truncate">
                         {getLocalizedText(quest.name)}
                       </h3>
-                      <p className="text-xs text-slate-400 mt-1 line-clamp-2">
-                        {getLocalizedText(quest.description)}
-                      </p>
                     </div>
                     <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30 flex-shrink-0 ml-2">
                       <CheckCircle2 size={12} className="mr-1" />

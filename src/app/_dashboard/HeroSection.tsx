@@ -7,6 +7,7 @@ import { getAllQuests } from "~/server/db/queries/quests";
 import { getAllHideoutModules } from "~/server/db/queries/workstations";
 import { useGameStore } from "@/lib/stores/game-store";
 import type { WorkstationLevel } from "~/lib/types";
+import Link from "next/link";
 
 export function HeroSection() {
   const { data: quests = [] } = useQuery({
@@ -49,21 +50,24 @@ export function HeroSection() {
       label: "Quest Progress",
       value: `${completedQuestsCount}/${totalQuests}`,
       subValue: `${questCompletionPercentage}% Complete`,
-      color: "cyan"
+      color: "cyan",
+      link: "/quests"
     },
     {
       icon: Hammer,
       label: "Workstations",
       value: `${completedWorkstationLevels}/${totalWorkstationLevels}`,
       subValue: `${workstationCompletionPercentage}% Complete`,
-      color: "blue"
+      color: "blue",
+      link: "/workstations"
     },
     {
       icon: Package,
       label: "Stash Value",
       value: "Coming Soon",
       subValue: "Inventory worth",
-      color: "purple"
+      color: "purple",
+      link: "/items"
     },
     {
       icon: TrendingUp,
@@ -76,29 +80,6 @@ export function HeroSection() {
 
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-b border-cyan-500/20">
-      {/* Animated particles background */}
-      {/* <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-cyan-400/30 rounded-full"
-            initial={{ 
-              x: Math.random() * 100 + "%", 
-              y: Math.random() * 100 + "%",
-              scale: Math.random() * 0.5 + 0.5
-            }}
-            animate={{ 
-              y: [null, Math.random() * -100 + "%"],
-              opacity: [0.3, 0.8, 0.3]
-            }}
-            transition={{ 
-              duration: Math.random() * 5 + 5, 
-              repeat: Infinity,
-              ease: "linear"
-            }}
-          />
-        ))}
-      </div> */}
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <motion.div
@@ -118,13 +99,13 @@ export function HeroSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
-            return (
+            const cardContent = (
               <motion.div
                 key={stat.label}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
-                className="bg-slate-900/50 backdrop-blur-sm border border-cyan-500/20 rounded-lg p-6 hover:border-cyan-500/40 transition-all duration-300"
+                className="bg-slate-900/50 backdrop-blur-sm border border-cyan-500/20 rounded-lg p-6 hover:border-cyan-500/40 transition-all duration-300 h-full"
               >
                 <div className="flex items-center gap-4">
                   <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30">
@@ -137,6 +118,14 @@ export function HeroSection() {
                   </div>
                 </div>
               </motion.div>
+            );
+
+            return stat.link ? (
+              <Link key={stat.label} href={stat.link} className="block">
+                {cardContent}
+              </Link>
+            ) : (
+              cardContent
             );
           })}
         </div>

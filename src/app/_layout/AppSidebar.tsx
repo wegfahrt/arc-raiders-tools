@@ -40,19 +40,22 @@ export function AppSidebar() {
       onMouseEnter={() => setCollapsed(false)}
       onMouseLeave={() => setCollapsed(true)}
     >
-      <Link href="/" className="p-6 border-b border-cyan-500/20 block hover:bg-cyan-500/5 transition-colors">
+      <Link href="/" className="p-6 border-b border-cyan-500/20 hover:bg-cyan-500/5 transition-colors h-[88px] flex flex-col justify-center">
         <h1 className={cn(
           "font-bold text-cyan-400 transition-all duration-300 whitespace-nowrap",
           collapsed ? "text-xl text-center" : "text-2xl"
         )}>
           {collapsed ? "AR" : "Arc Raiders"}
         </h1>
-        {!collapsed && (
-          <p className="text-sm text-slate-400 mt-1 whitespace-nowrap">Companion App</p>
-        )}
+        <p className={cn(
+          "text-sm text-slate-400 mt-1 whitespace-nowrap transition-opacity duration-300",
+          collapsed ? "opacity-0 h-0" : "opacity-100"
+        )}>
+          Companion App
+        </p>
       </Link>
 
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-4 space-y-2 overflow-hidden">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.path;
@@ -62,10 +65,10 @@ export function AppSidebar() {
               key={item.path}
               href={item.path}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+                "flex items-center gap-3 rounded-lg transition-all duration-200 h-[44px]",
                 "hover:bg-cyan-500/10 hover:border-cyan-500/30 border border-transparent",
                 isActive && "bg-cyan-500/20 border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.3)]",
-                collapsed && "justify-center"
+                collapsed ? "justify-center px-0 w-[52px] mx-auto" : "px-4"
               )}
             >
               <Icon className={cn(
@@ -75,13 +78,13 @@ export function AppSidebar() {
               {!collapsed && (
                 <>
                   <span className={cn(
-                    "flex-1",
+                    "flex-1 whitespace-nowrap",
                     isActive ? "text-cyan-300 font-medium" : "text-slate-300"
                   )}>
                     {item.label}
                   </span>
                   {item.soon && (
-                    <Badge variant="secondary" className="text-xs bg-orange-500/20 text-orange-400 border-orange-500/30">
+                    <Badge variant="secondary" className="text-xs bg-orange-500/20 text-orange-400 border-orange-500/30 whitespace-nowrap">
                       Soon
                     </Badge>
                   )}
