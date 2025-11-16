@@ -245,12 +245,17 @@ function findPathsToMaterial(
       const sourceItem = currentSteps[0]?.input || currentItem;
       const finalQuantity = produces[targetMaterialId]! * currentQuantity;
 
+      // Calculate efficiency based on final output vs initial input
+      const inputValue = sourceItem.value || 0;
+      const outputValue = (targetMaterial.value || 0) * finalQuantity;
+      const pathEfficiency = inputValue > 0 ? Math.round((outputValue / inputValue) * 100) : 0;
+
       paths.push({
         sourceItem,
         targetMaterial,
         steps: newSteps,
         totalSteps: newSteps.length,
-        efficiency: calculateRecyclingEfficiency(sourceItem.id, items),
+        efficiency: pathEfficiency,
         finalQuantity,
         totalValueCost: sourceItem.value || 0,
       });

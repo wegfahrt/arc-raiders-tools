@@ -55,10 +55,8 @@ export default function Recycling() {
   
   // Find Material tab state
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
-  const [maxDepth, setMaxDepth] = useState<string>("10");
   const [sortBy, setSortBy] = useState<string>("efficiency");
   const [rarityFilter, setRarityFilter] = useState<string>("all");
-  const [minEfficiency, setMinEfficiency] = useState<string>("0");
   
   // Chain Viewer tab state
   const [selectedChainItemId, setSelectedChainItemId] = useState<string | null>(null);
@@ -80,16 +78,12 @@ export default function Recycling() {
   // Find reverse recycling paths
   const recyclingPaths = useMemo(() => {
     if (!selectedMaterialId) return [];
-    let paths = findReverseRecyclingPaths(selectedMaterialId, items, parseInt(maxDepth));
+    let paths = findReverseRecyclingPaths(selectedMaterialId, items, 10);
     
     // Apply filters
     paths = paths.filter(path => {
       // Rarity filter
       if (rarityFilter !== "all" && path.sourceItem.rarity !== rarityFilter) return false;
-      
-      // Min efficiency filter
-      if (path.efficiency < parseInt(minEfficiency)) return false;
-      
       return true;
     });
     
@@ -108,7 +102,7 @@ export default function Recycling() {
           return 0;
       }
     });
-  }, [selectedMaterialId, items, maxDepth, sortBy, rarityFilter, minEfficiency]);
+  }, [selectedMaterialId, items, sortBy, rarityFilter]);
 
   // Get terminal materials for selected chain item
   const chainTerminalMaterials = useMemo(() => {
