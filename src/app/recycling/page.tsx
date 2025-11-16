@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,7 +38,7 @@ import RecyclingFlowChart from "~/app/recycling/RecyclingFlowChart";
 import RecyclingChainList from "~/app/recycling/RecyclingChainList";
 import TerminalMaterialsSummary from "~/app/recycling/TerminalMaterialsSummary";
 
-export default function Recycling() {
+function RecyclingContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -376,5 +376,20 @@ export default function Recycling() {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+export default function Recycling() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen p-4 sm:p-6 lg:p-8 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 size={48} className="animate-spin text-cyan-400 mx-auto" />
+          <p className="text-slate-400">Loading recycling data...</p>
+        </div>
+      </div>
+    }>
+      <RecyclingContent />
+    </Suspense>
   );
 }
