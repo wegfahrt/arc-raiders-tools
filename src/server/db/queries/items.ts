@@ -40,3 +40,19 @@ export async function getItemById(id: string): Promise<Item | undefined> {
 export async function getQuestItems() {
   return db.select().from(materialUsage).where(gt(materialUsage.questRequired, 0));
 }
+
+export async function getRecyclableItems(): Promise<Item[]> {
+  const result = await db.select().from(items)
+    .where(ne(items.type, 'Unknown'))
+    .orderBy(asc(items.name));
+  
+  // Transform null to undefined for optional fields
+  return result.map(item => ({
+    ...item,
+    recyclesInto: item.recyclesInto ?? undefined,
+    salvagesInto: item.salvagesInto ?? undefined,
+    recipe: item.recipe ?? undefined,
+    effects: item.effects ?? undefined,
+    weightKg: item.weightKg ? Number(item.weightKg) : undefined,
+  })) as Item[];
+}

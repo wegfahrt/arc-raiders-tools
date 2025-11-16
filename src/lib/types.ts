@@ -706,3 +706,69 @@ export interface CraftBenchWithItems {
     recipe: MaterialRecipe;
   }[];
 }
+
+// ============================================================================
+// RECYCLING TYPES
+// ============================================================================
+
+/**
+ * Recycling node in a tree structure for flowchart visualization
+ */
+export interface RecyclingNode {
+  item: Item;
+  produces: MaterialRecipe;
+  children: RecyclingNode[];
+  depth: number;
+  quantity: number;
+}
+
+/**
+ * A single step in a recycling path
+ */
+export interface RecyclingStep {
+  input: Item;
+  outputs: MaterialRecipe;
+  stepNumber: number;
+}
+
+/**
+ * Complete path from source item to target material
+ */
+export interface RecyclingPath {
+  sourceItem: Item;
+  targetMaterial: Item;
+  steps: RecyclingStep[];
+  totalSteps: number;
+  efficiency: number;
+  finalQuantity: number;
+  totalValueCost: number;
+}
+
+/**
+ * Comprehensive recycling metrics for an item
+ */
+export interface RecyclingMetrics {
+  depth: number;
+  efficiency: number;
+  isTerminal: boolean;
+  totalValue: number;
+  canBeRecycled: boolean;
+}
+
+/**
+ * Item with computed recycling metrics
+ */
+export interface ItemWithRecyclingMetrics extends Item {
+  metrics: RecyclingMetrics;
+  terminalMaterials: Record<string, number>;
+}
+
+/**
+ * Terminal material breakdown (final materials after complete recycling)
+ */
+export interface MaterialBreakdown {
+  materialId: string;
+  material: Item;
+  quantity: number;
+  totalValue: number;
+}

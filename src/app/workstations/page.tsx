@@ -36,8 +36,6 @@ export default function Workstations() {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  console.log('Workstations:', workstations);
-
   const { workstationLevels, upgradeWorkstation, inventory } = useGameStore();
 
   // Calculate the maximum height needed across ALL workstations to prevent layout shifts

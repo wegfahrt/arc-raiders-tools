@@ -8,6 +8,7 @@ import {
   Package, 
   Hammer, 
   Calculator, 
+  Recycle,
   Map, 
   BookOpen,
   ChevronLeft,
@@ -23,6 +24,7 @@ const navItems = [
   { path: "/items", icon: Package, label: "Items" },
   { path: "/workstations", icon: Hammer, label: "Workstations"},
   { path: "/calculator", icon: Calculator, label: "Calculator" },
+  { path: "/recycling", icon: Recycle, label: "Recycling"},
   { path: "/maps", icon: Map, label: "Maps", soon: true },
   { path: "/guides", icon: BookOpen, label: "Guides", soon: true},
 ];
