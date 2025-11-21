@@ -115,7 +115,7 @@ export function AppSidebar() {
                 collapsed ? "justify-center" : "justify-start"
               )}
             >
-              <Settings className="text-cyan-400 flex-shrink-0" size={20} />
+              <Settings className="text-cyan-400 flex-shrink-0 min-h-[40px]" size={20} />
               {!collapsed && (
                 <span className="text-cyan-300 font-medium">Settings</span>
               )}

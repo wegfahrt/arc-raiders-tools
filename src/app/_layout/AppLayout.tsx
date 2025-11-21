@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { AppSidebar } from "../_layout/AppSidebar";
 import { MobileNav } from "../_layout/MobileNav";
+import { Footer } from "../_layout/Footer";
 import { Menu } from "lucide-react";
 
 interface AppLayoutProps {
@@ -27,6 +28,8 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="flex-1 overflow-auto pb-20 lg:pb-0">
           {children}
         </div>
+
+        <Footer />
       </main>
 
       <MobileNav />
