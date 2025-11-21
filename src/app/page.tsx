@@ -1,6 +1,10 @@
+import { type Metadata } from "next";
 import { HeroSection } from "~/app/_dashboard/HeroSection";
 import { ActiveMissions } from "~/app/_dashboard/ActiveMissions";
 import { MaterialShortages } from "~/app/_dashboard/MaterialShortages";
+import { generateMetadata as generatePageMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = generatePageMetadata("home");
 
 export default function Dashboard() {
   return (
