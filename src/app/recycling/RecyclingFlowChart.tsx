@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Layers, Package } from "lucide-react";
 import type { Item, RecyclingNode as RecyclingNodeType } from "@/lib/types";
-import { getLocalizedText } from "~/lib/utils";
+import { useLocalizedText } from "~/lib/utils";
 import { buildRecyclingChain } from "~/lib/utils/recycling-calculator";
 import RecyclingNodeComponent from "~/app/recycling/RecyclingNode";
 
@@ -46,6 +46,8 @@ export default function RecyclingFlowChart({
     () => buildRecyclingChain(itemId, items),
     [itemId, items]
   );
+
+  const localizeText = useLocalizedText();
 
   // Transform recycling chain to React Flow nodes and edges
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {

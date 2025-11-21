@@ -12,7 +12,7 @@ import {
 import { ItemTooltip } from "@/components/ui/item-tooltip";
 import { ArrowRight, Leaf, Package } from "lucide-react";
 import type { Item } from "@/lib/types";
-import { getLocalizedText } from "~/lib/utils";
+import { useLocalizedText } from "~/lib/utils";
 import { buildRecyclingChain } from "~/lib/utils/recycling-calculator";
 import type { RecyclingNode } from "~/lib/utils/recycling-calculator";
 
@@ -27,6 +27,7 @@ export default function RecyclingChainList({
   items,
   onItemClick,
 }: RecyclingChainListProps) {
+  const localizeText = useLocalizedText();
   // Build recycling chain
   const chain = useMemo(
     () => buildRecyclingChain(itemId, items),
@@ -124,13 +125,13 @@ export default function RecyclingChainList({
                           {node.item.imageFilename && (
                             <img
                               src={node.item.imageFilename}
-                              alt={getLocalizedText(node.item.name)}
+                              alt={localizeText(node.item.name)}
                               className="w-12 h-12 object-cover rounded border border-slate-600"
                             />
                           )}
                           <div className="flex-1 min-w-0">
                             <div className="font-semibold text-sm text-slate-200 truncate">
-                              {getLocalizedText(node.item.name)}
+                              {localizeText(node.item.name)}
                             </div>
                             <div className="text-xs text-slate-400 mt-0.5">
                               {node.item.type}

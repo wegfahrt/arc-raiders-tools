@@ -22,7 +22,7 @@ import {
 import { Recycle, Database, Search as SearchIcon, GitBranch, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getRecyclableItems } from "~/server/db/queries/items";
-import { getLocalizedText } from "~/lib/utils";
+import { useLocalizedText } from "~/lib/utils";
 import {
   findReverseRecyclingPaths,
   getTerminalMaterials,
@@ -39,6 +39,7 @@ import RecyclingChainList from "~/app/recycling/RecyclingChainList";
 import TerminalMaterialsSummary from "~/app/recycling/TerminalMaterialsSummary";
 
 function RecyclingContent() {
+  const localizeText = useLocalizedText();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -358,7 +359,7 @@ function RecyclingContent() {
                     <TerminalMaterialsSummary
                       terminalMaterials={chainTerminalMaterials}
                       items={items}
-                      sourceItemName={getLocalizedText(
+                      sourceItemName={localizeText(
                         recyclableItems.find((i) => i.id === selectedChainItemId)?.name || ""
                       )}
                     />

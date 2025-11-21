@@ -14,7 +14,7 @@ import { ItemTooltip } from "@/components/ui/item-tooltip";
 import { getAllQuests } from "~/server/db/queries/quests";
 import { getAllHideoutModules } from "~/server/db/queries/workstations";
 import { getAllItems } from "~/server/db/queries/items";
-import { getLocalizedText } from "~/lib/utils";
+import { useLocalizedText } from "~/lib/utils";
 import { useGameStore } from "@/lib/stores/game-store";
 import Link from "next/link";
 import type { WorkstationLevel, Item } from "~/lib/types";
@@ -43,6 +43,7 @@ export function MaterialShortages() {
   });
 
   const { completedQuests, workstationLevels } = useGameStore();
+  const localizeText = useLocalizedText(); 
 
   // Calculate most needed materials with sources
   const materialNeeds: Record<string, { total: number; sources: MaterialSource[] }> = {};
@@ -58,7 +59,7 @@ export function MaterialShortages() {
         materialNeeds[req.itemId].total += req.quantity;
         materialNeeds[req.itemId].sources.push({
           type: 'quest',
-          name: getLocalizedText(quest.name),
+          name: localizeText(quest.name),
           quantity: req.quantity,
           id: quest.id
         });
@@ -77,7 +78,7 @@ export function MaterialShortages() {
         materialNeeds[req.itemId].total += req.quantity;
         materialNeeds[req.itemId].sources.push({
           type: 'workstation',
-          name: `${getLocalizedText(ws.name)} Lvl ${nextLevel.level}`,
+          name: `${localizeText(ws.name)} Lvl ${nextLevel.level}`,
           quantity: req.quantity,
           id: ws.id
         });
@@ -137,7 +138,7 @@ export function MaterialShortages() {
                     {item?.imageFilename ? (
                       <img 
                         src={item.imageFilename} 
-                        alt={getLocalizedText(item.name)} 
+                        alt={localizeText(item.name)} 
                         className="w-full h-full object-cover rounded-lg" 
                       />
                     ) : (
@@ -146,7 +147,7 @@ export function MaterialShortages() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-200 truncate">
-                      {item ? getLocalizedText(item.name) : itemId}
+                      {item ? localizeText(item.name) : itemId}
                     </p>
                     {item?.type && (
                       <p className="text-xs text-slate-400">

@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Target, CheckCircle2, Lock } from "lucide-react";
 import { useGameStore } from "@/lib/stores/game-store";
-import { getLocalizedText } from "~/lib/utils";
+import { useLocalizedText } from "~/lib/utils";
 import Link from "next/link";
 import type { QuestStatus } from "~/lib/types";
 
@@ -18,6 +18,7 @@ export function ActiveMissions() {
   });
 
   const { completedQuests } = useGameStore();
+  const localizeText = useLocalizedText(); 
 
   // Calculate quest status
   const questsWithStatus = quests.map(quest => {
@@ -88,7 +89,7 @@ export function ActiveMissions() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-semibold text-cyan-300 truncate">
-                        {getLocalizedText(quest.name)}
+                        {localizeText(quest.name)}
                       </h3>
                     </div>
                     <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30 flex-shrink-0 ml-2">
@@ -101,7 +102,7 @@ export function ActiveMissions() {
                     {quest.objectives.slice(0, 2).map((objective, i) => (
                       <div key={i} className="flex items-start gap-2 text-sm text-slate-300">
                         <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0 mt-1.5" />
-                        <span className="line-clamp-1">{getLocalizedText(objective)}</span>
+                        <span className="line-clamp-1">{localizeText(objective)}</span>
                       </div>
                     ))}
                     {quest.objectives.length > 2 && (

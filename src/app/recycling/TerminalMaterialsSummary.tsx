@@ -14,7 +14,7 @@ import {
 import { ItemTooltip } from "@/components/ui/item-tooltip";
 import { ChevronDown, ChevronUp, Package, Coins } from "lucide-react";
 import type { Item } from "@/lib/types";
-import { getLocalizedText } from "~/lib/utils";
+import { useLocalizedText } from "~/lib/utils";
 
 interface TerminalMaterialsSummaryProps {
   terminalMaterials: Record<string, number>;
@@ -29,6 +29,7 @@ export default function TerminalMaterialsSummary({
   sourceItemName,
   className = "",
 }: TerminalMaterialsSummaryProps) {
+  const localizeText = useLocalizedText();
   const [isExpanded, setIsExpanded] = useState(true);
 
   // Convert terminal materials to array with item data
@@ -131,13 +132,13 @@ export default function TerminalMaterialsSummary({
                                 {mat.material.imageFilename && (
                                   <img
                                     src={mat.material.imageFilename}
-                                    alt={getLocalizedText(mat.material.name)}
+                                    alt={localizeText(mat.material.name)}
                                     className="w-10 h-10 object-cover rounded border border-slate-600"
                                   />
                                 )}
                                 <div className="flex-1 min-w-0">
                                   <div className="font-medium text-slate-200 truncate">
-                                    {getLocalizedText(mat.material.name)}
+                                    {localizeText(mat.material.name)}
                                   </div>
                                   <div className="flex items-center gap-2 mt-0.5">
                                     <Badge

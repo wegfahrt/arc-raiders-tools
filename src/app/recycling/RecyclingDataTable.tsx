@@ -38,7 +38,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import type { Item, RecyclingMetrics } from "@/lib/types";
-import { getLocalizedText } from "~/lib/utils";
+import { useLocalizedText } from "~/lib/utils";
 import { calculateRecyclingMetrics } from "~/lib/utils/recycling-calculator";
 
 interface RecyclingDataTableProps {
@@ -53,6 +53,7 @@ export default function RecyclingDataTable({
   items,
   onItemClick,
 }: RecyclingDataTableProps) {
+  const localizeText = useLocalizedText();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [rarityFilter, setRarityFilter] = useState<string>("all");
@@ -88,7 +89,7 @@ export default function RecyclingDataTable({
 
       // Search filter
       const searchLower = searchQuery.toLowerCase();
-      const nameMatch = getLocalizedText(item.name)
+      const nameMatch = localizeText(item.name)
         .toLowerCase()
         .includes(searchLower);
       const idMatch = item.id.toLowerCase().includes(searchLower);
@@ -109,8 +110,8 @@ export default function RecyclingDataTable({
 
       switch (sortField) {
         case "name":
-          comparison = getLocalizedText(a.name).localeCompare(
-            getLocalizedText(b.name)
+          comparison = localizeText(a.name).localeCompare(
+            localizeText(b.name)
           );
           break;
         case "efficiency":
@@ -314,7 +315,7 @@ export default function RecyclingDataTable({
                               {item.imageFilename ? (
                                 <img
                                   src={item.imageFilename}
-                                  alt={getLocalizedText(item.name)}
+                                  alt={localizeText(item.name)}
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
                                     e.currentTarget.style.display = 'none';
@@ -329,7 +330,7 @@ export default function RecyclingDataTable({
                               )}
                             </div>
                             <span className="font-medium">
-                              {getLocalizedText(item.name)}
+                              {localizeText(item.name)}
                             </span>
                           </div>
                         </TooltipTrigger>
@@ -376,7 +377,7 @@ export default function RecyclingDataTable({
                                       {material?.imageFilename ? (
                                         <img
                                           src={material.imageFilename}
-                                          alt={getLocalizedText(material.name)}
+                                          alt={localizeText(material.name)}
                                           className="w-full h-full object-cover"
                                           onError={(e) => {
                                             e.currentTarget.style.display = 'none';
@@ -391,7 +392,7 @@ export default function RecyclingDataTable({
                                       )}
                                     </div>
                                     <span className="text-xs font-medium text-slate-300">
-                                      {material ? getLocalizedText(material.name) : matId}
+                                      {material ? localizeText(material.name) : matId}
                                     </span>
                                     <Badge variant="outline" className="text-xs border-cyan-500/30 text-cyan-400 ml-0.5">
                                       {qty}
@@ -445,13 +446,13 @@ export default function RecyclingDataTable({
                                             {material.imageFilename && (
                                               <img
                                                 src={material.imageFilename}
-                                                alt={getLocalizedText(material.name)}
+                                                alt={localizeText(material.name)}
                                                 className="w-10 h-10 object-cover rounded border border-slate-600"
                                               />
                                             )}
                                             <div className="flex-1">
                                               <div className="font-medium text-slate-200 text-sm">
-                                                {getLocalizedText(material.name)}
+                                                {localizeText(material.name)}
                                               </div>
                                               <Badge
                                                 variant="outline"

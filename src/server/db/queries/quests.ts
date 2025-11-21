@@ -4,7 +4,6 @@ import { asc, eq, gt, ne } from 'drizzle-orm';
 import { db } from '../index';
 import { questRequirements, quests } from '../schema';
 import type { Item, ItemsResponse, QuestWithRelations } from '~/lib/types';
-import { getLocalizedText } from '~/lib/utils';
 
 export async function getAllQuests(): Promise<QuestWithRelations[]> {
   return db.query.quests.findMany({

@@ -4,7 +4,7 @@ import { Handle, Position } from "reactflow";
 import { Badge } from "../../components/ui/badge";
 import { Package, Leaf } from "lucide-react";
 import type { Item } from "@/lib/types";
-import { getLocalizedText } from "~/lib/utils";
+import { useLocalizedText } from "~/lib/utils";
 
 interface RecyclingNodeData {
   item: Item;
@@ -16,6 +16,7 @@ interface RecyclingNodeData {
 
 export const RecyclingNode = memo(({ data }: NodeProps<RecyclingNodeData>) => {
   const { item, quantity, depth, isTerminal, isSource } = data;
+  const localizeText = useLocalizedText(); 
 
   // Determine node styling based on type
   const borderColor = isSource
@@ -61,13 +62,13 @@ export const RecyclingNode = memo(({ data }: NodeProps<RecyclingNodeData>) => {
           {item.imageFilename && (
             <img
               src={item.imageFilename}
-              alt={getLocalizedText(item.name)}
+              alt={localizeText(item.name)}
               className="w-10 h-10 object-cover rounded border border-slate-600"
             />
           )}
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-sm text-slate-200 truncate">
-              {getLocalizedText(item.name)}
+              {localizeText(item.name)}
             </div>
             <div className="text-xs text-slate-400">{item.type}</div>
           </div>

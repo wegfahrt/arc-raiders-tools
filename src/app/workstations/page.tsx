@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ItemTooltip } from "@/components/ui/item-tooltip";
 import { Hammer, Check, Lock, Info, Zap, Wrench, Egg, Shield, Bomb, Cross, Package, Briefcase, Atom, Cog } from "lucide-react";
-import { getLocalizedText } from "~/lib/utils";
+import { useLocalizedText } from "~/lib/utils";
 import { getAllHideoutModules } from "~/server/db/queries/workstations";
 import type { RequirementItem, Workstation, WorkstationLevel } from "~/lib/types";
 
@@ -36,7 +36,7 @@ export default function Workstations() {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const { workstationLevels, upgradeWorkstation, inventory } = useGameStore();
+  const { workstationLevels, upgradeWorkstation, inventory } = useGameStore(); 
 
   // Calculate the maximum height needed across ALL workstations to prevent layout shifts
   const maxRequirementsHeight = useMemo(() => {
@@ -113,6 +113,7 @@ function WorkstationCard({
 }) {
   // Default to current level tab
   const [selectedLevel, setSelectedLevel] = useState(currentLevel.toString());
+  const localizeText = useLocalizedText(); 
   
   // Get the appropriate icon for this workstation
   const WorkstationIcon = workstationIcons[workstation.id] || Wrench;
@@ -137,7 +138,7 @@ function WorkstationCard({
               <WorkstationIcon className="text-cyan-400" size={24} />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-cyan-300">{getLocalizedText(workstation.name)}</h3>
+              <h3 className="text-lg font-semibold text-cyan-300">{localizeText(workstation.name)}</h3>
               <div className="flex items-center gap-2 mt-1">
                 <Badge variant="outline" className="text-xs border-cyan-500/30 text-cyan-400">
                   Level {currentLevel}/{workstation.maxLevel}
@@ -269,7 +270,7 @@ function WorkstationCard({
                                       {req.item.imageFilename ? (
                                         <img 
                                           src={req.item.imageFilename} 
-                                          alt={getLocalizedText(req.item.name)} 
+                                          alt={localizeText(req.item.name)} 
                                           className="w-full h-full object-cover rounded-lg" 
                                         />
                                       ) : (
@@ -280,7 +281,7 @@ function WorkstationCard({
                                     {/* Item Info */}
                                     <div className="flex-1 min-w-0">
                                       <p className="text-sm font-medium text-slate-200 truncate">
-                                        {getLocalizedText(req.item.name)}
+                                        {localizeText(req.item.name)}
                                       </p>
                                       <p className="text-xs text-slate-400">
                                         {req.item.type}

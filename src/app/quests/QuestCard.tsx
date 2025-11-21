@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ItemTooltip } from "@/components/ui/item-tooltip";
 import { User, CheckCircle2, CircleHelp } from "lucide-react";
 import type { QuestWithRelations } from "@/lib/types";
-import { getLocalizedText } from "~/lib/utils";
+import { useLocalizedText } from "~/lib/utils";
 import type { QuestWithStatus } from "@/lib/types";
 import { useGameStore } from "~/lib/stores/game-store";
 
@@ -25,6 +25,7 @@ export default function QuestCard({
   onToggleComplete: () => void;
   onQuestNavigate?: (quest: QuestWithStatus) => void;
 }) {
+  const localizeText = useLocalizedText();
   const { completedQuests } = useGameStore();
 
   // Handle quest navigation
@@ -65,7 +66,7 @@ export default function QuestCard({
           {/* Header Section */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <h3 className="text-2xl font-bold text-cyan-300 mb-2">{getLocalizedText(quest.name)}</h3>
+              <h3 className="text-2xl font-bold text-cyan-300 mb-2">{localizeText(quest.name)}</h3>
               <div className="flex items-center gap-2">
                 <User size={16} className="text-slate-400" />
                 <span className="text-sm text-slate-400">{quest.trader}</span>
@@ -108,7 +109,7 @@ export default function QuestCard({
                             onClick={() => handleQuestClick(prevId)}
                           >
                             {isPrevCompleted && <CheckCircle2 size={12} className="mr-1" />}
-                            {getLocalizedText(prevQuest.name)}
+                            {localizeText(prevQuest.name)}
                           </Badge>
                         ) : null;
                       })}
@@ -141,7 +142,7 @@ export default function QuestCard({
                             onClick={() => handleQuestClick(nextId)}
                           >
                             {isNextCompleted && <CheckCircle2 size={12} className="mr-1" />}
-                            {getLocalizedText(nextQuest.name)}
+                            {localizeText(nextQuest.name)}
                           </Badge>
                         ) : null;
                       })}
@@ -175,7 +176,7 @@ export default function QuestCard({
                       </div>
                       <div className="flex-1 min-w-0 pt-1">
                         <p className="text-sm text-slate-200">
-                          {getLocalizedText(objective)}
+                          {localizeText(objective)}
                         </p>
                       </div>
                     </div>
@@ -205,7 +206,7 @@ export default function QuestCard({
                                 ) : req.item?.imageFilename ? (
                                   <img 
                                     src={req.item.imageFilename} 
-                                    alt={req.item ? getLocalizedText(req.item.name) : req.itemId} 
+                                    alt={req.item ? localizeText(req.item.name) : req.itemId} 
                                     className="w-full h-full object-cover rounded-lg" 
                                   />
                                 ) : (
@@ -214,7 +215,7 @@ export default function QuestCard({
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-slate-200 truncate">
-                                  {req.item ? getLocalizedText(req.item.name) : req.itemId}
+                                  {req.item ? localizeText(req.item.name) : req.itemId}
                                 </p>
                                 {req.item?.type && (
                                   <p className="text-xs text-slate-400">
@@ -264,7 +265,7 @@ export default function QuestCard({
                                 ) : reward.item?.imageFilename ? (
                                   <img 
                                     src={reward.item.imageFilename} 
-                                    alt={reward.item ? getLocalizedText(reward.item.name) : reward.itemId} 
+                                    alt={reward.item ? localizeText(reward.item.name) : reward.itemId} 
                                     className="w-full h-full object-cover rounded-lg" 
                                   />
                                 ) : (
@@ -273,7 +274,7 @@ export default function QuestCard({
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-slate-200 truncate">
-                                  {reward.item ? getLocalizedText(reward.item.name) : reward.itemId}
+                                  {reward.item ? localizeText(reward.item.name) : reward.itemId}
                                 </p>
                                 {reward.item?.type && (
                                   <p className="text-xs text-slate-400">

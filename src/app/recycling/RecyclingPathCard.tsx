@@ -13,7 +13,7 @@ import {
 import { ItemTooltip } from "@/components/ui/item-tooltip";
 import { ArrowRight, Layers, TrendingUp, Coins } from "lucide-react";
 import type { RecyclingPath } from "@/lib/types";
-import { getLocalizedText } from "~/lib/utils";
+import { useLocalizedText } from "~/lib/utils";
 
 interface RecyclingPathCardProps {
   path: RecyclingPath;
@@ -26,6 +26,7 @@ export default function RecyclingPathCard({
   index,
   onViewFlowchart,
 }: RecyclingPathCardProps) {
+  const localizeText = useLocalizedText();
   const efficiencyColor =
     path.efficiency >= 80
       ? "text-green-400 border-green-500/50 bg-green-500/10"
@@ -51,13 +52,13 @@ export default function RecyclingPathCard({
                       {path.sourceItem.imageFilename && (
                         <img
                           src={path.sourceItem.imageFilename}
-                          alt={getLocalizedText(path.sourceItem.name)}
+                          alt={localizeText(path.sourceItem.name)}
                           className="w-10 h-10 object-cover rounded border-2 border-slate-700"
                         />
                       )}
                       <div>
                         <div className="font-semibold text-slate-200">
-                          {getLocalizedText(path.sourceItem.name)}
+                          {localizeText(path.sourceItem.name)}
                         </div>
                         <div className="text-xs text-slate-400">
                           {path.sourceItem.type}
@@ -80,13 +81,13 @@ export default function RecyclingPathCard({
                       {path.targetMaterial.imageFilename && (
                         <img
                           src={path.targetMaterial.imageFilename}
-                          alt={getLocalizedText(path.targetMaterial.name)}
+                          alt={localizeText(path.targetMaterial.name)}
                           className="w-10 h-10 object-cover rounded border-2 border-cyan-500/50"
                         />
                       )}
                       <div>
                         <div className="font-semibold text-cyan-300">
-                          {getLocalizedText(path.targetMaterial.name)}
+                          {localizeText(path.targetMaterial.name)}
                         </div>
                         <div className="text-xs text-slate-400">
                           x{path.finalQuantity}
@@ -129,7 +130,7 @@ export default function RecyclingPathCard({
                     <div className="text-slate-300">
                       Recycle{" "}
                       <span className="font-medium text-slate-200">
-                        {getLocalizedText(step.input.name)}
+                        {localizeText(step.input.name)}
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-1.5 mt-1">

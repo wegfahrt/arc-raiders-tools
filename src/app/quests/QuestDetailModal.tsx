@@ -11,7 +11,7 @@ import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { CheckCircle2, CircleHelp, User, X } from 'lucide-react';
 import type { QuestWithRelations } from '~/lib/types';
-import { getLocalizedText } from '~/lib/utils';
+import { useLocalizedText } from '~/lib/utils';
 import { useGameStore } from '~/lib/stores/game-store';
 
 type QuestStatus = "active" | "locked" | "completed";
@@ -49,6 +49,7 @@ export default function QuestDetailModal({
 
   // Get completion status from the store directly to react to changes
   const { completedQuests } = useGameStore();
+  const localizeText = useLocalizedText(); 
   const isCompleted = completedQuests.includes(quest.id);
 
   // Handle quest navigation
@@ -85,7 +86,7 @@ export default function QuestDetailModal({
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <DialogTitle className="text-2xl font-bold text-cyan-300">
-                {getLocalizedText(quest.name)}
+                {localizeText(quest.name)}
               </DialogTitle>
               <DialogDescription className="flex items-center gap-2 mt-2">
                 <User size={14} className="text-slate-400" />
@@ -131,7 +132,7 @@ export default function QuestDetailModal({
                             onClick={() => handleQuestClick(prevId)}
                           >
                             {isPrevCompleted && <CheckCircle2 size={12} className="mr-1" />}
-                            {getLocalizedText(prevQuest.name)}
+                            {localizeText(prevQuest.name)}
                           </Badge>
                         ) : null;
                       })}
@@ -164,7 +165,7 @@ export default function QuestDetailModal({
                             onClick={() => handleQuestClick(nextId)}
                           >
                             {isNextCompleted && <CheckCircle2 size={12} className="mr-1" />}
-                            {getLocalizedText(nextQuest.name)}
+                            {localizeText(nextQuest.name)}
                           </Badge>
                         ) : null;
                       })}
@@ -193,7 +194,7 @@ export default function QuestDetailModal({
                   </div>
                   <div className="flex-1 min-w-0 pt-1">
                     <p className="text-sm text-slate-200">
-                      {getLocalizedText(objective)}
+                      {localizeText(objective)}
                     </p>
                   </div>
                 </div>
@@ -221,7 +222,7 @@ export default function QuestDetailModal({
                             ) : req.item?.imageFilename ? (
                               <img 
                                 src={req.item.imageFilename} 
-                                alt={req.item ? getLocalizedText(req.item.name) : req.itemId} 
+                                alt={req.item ? localizeText(req.item.name) : req.itemId} 
                                 className="w-full h-full object-cover rounded-lg" 
                               />
                             ) : (
@@ -231,7 +232,7 @@ export default function QuestDetailModal({
                           
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-slate-200 truncate">
-                              {req.item ? getLocalizedText(req.item.name) : req.itemId}
+                              {req.item ? localizeText(req.item.name) : req.itemId}
                             </p>
                             <p className="text-xs text-slate-500">Required</p>
                           </div>
@@ -266,7 +267,7 @@ export default function QuestDetailModal({
                             ) : reward.item?.imageFilename ? (
                               <img 
                                 src={reward.item.imageFilename} 
-                                alt={reward.item ? getLocalizedText(reward.item.name) : reward.itemId} 
+                                alt={reward.item ? localizeText(reward.item.name) : reward.itemId} 
                                 className="w-full h-full object-cover rounded-lg" 
                               />
                             ) : (
@@ -277,7 +278,7 @@ export default function QuestDetailModal({
                           
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-slate-200 truncate">
-                              {reward.item ? getLocalizedText(reward.item.name) : reward.itemId}
+                              {reward.item ? localizeText(reward.item.name) : reward.itemId}
                             </p>
                             <p className="text-xs text-slate-500">Reward</p>
                           </div>

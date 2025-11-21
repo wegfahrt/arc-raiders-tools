@@ -20,7 +20,7 @@ import { getAllQuests } from "~/server/db/queries/quests";
 import { getAllHideoutModules} from "~/server/db/queries/workstations";
 import { getAllItems } from "~/server/db/queries/items";
 import { getAllProjects } from "~/server/db/queries/projects";
-import { getLocalizedText } from "~/lib/utils";
+import { useLocalizedText } from "~/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { ItemTooltip } from "~/components/ui/item-tooltip";
 import { useGameStore } from "~/lib/stores/game-store";
@@ -78,6 +78,7 @@ export default function Calculator() {
   const getIncompleteQuests = useGameStore(state => state.getIncompleteQuests);
   const getIncompleteUpgrades = useGameStore(state => state.getIncompleteUpgrades);
   const getIncompleteProjectPhases = useGameStore(state => state.getIncompleteProjectPhases);
+  const localizeText = useLocalizedText(); 
 
   // Load saved calculations from localStorage on mount
   useEffect(() => {
@@ -413,7 +414,7 @@ export default function Calculator() {
     const filteredMaterials = Object.values(materials).filter(mat => {
       const item = getItemFromCache(mat.itemId);
       const itemName = item?.name || mat.itemId;
-      return getLocalizedText(itemName).toLowerCase().includes(searchQuery.toLowerCase());
+      return localizeText(itemName).toLowerCase().includes(searchQuery.toLowerCase());
     });
     
     if (filteredMaterials.length > 0) {
@@ -478,7 +479,7 @@ export default function Calculator() {
                       onClick={(e) => e.stopPropagation()}
                     />
                     <div className="flex-1">
-                      <p className="text-sm text-slate-300">{getLocalizedText(quest.name)}</p>
+                      <p className="text-sm text-slate-300">{localizeText(quest.name)}</p>
                       <p className="text-xs text-slate-500">{quest.trader}</p>
                     </div>
                   </div>
@@ -513,7 +514,7 @@ export default function Calculator() {
                 {workstations.map(ws => (
                   <Collapsible key={ws.id} className="bg-[oklch(var(--card-light))] rounded">
                     <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded hover:bg-slate-800/50 text-left ">
-                      <span className="text-sm text-slate-300">{getLocalizedText(ws.name)}</span>
+                      <span className="text-sm text-slate-300">{localizeText(ws.name)}</span>
                       <ChevronDown size={16} className="text-slate-400" />
                     </CollapsibleTrigger>
                     <CollapsibleContent className="pl-4 space-y-2 mt-2">
@@ -567,7 +568,7 @@ export default function Calculator() {
                 {allProjects.map(project => (
                   <Collapsible key={project.id} className="bg-[oklch(var(--card-light))] rounded">
                     <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded hover:bg-slate-800/50 text-left">
-                      <span className="text-sm text-slate-300">{getLocalizedText(project.name)}</span>
+                      <span className="text-sm text-slate-300">{localizeText(project.name)}</span>
                       <ChevronDown size={16} className="text-slate-400" />
                     </CollapsibleTrigger>
                     <CollapsibleContent className="pl-4 space-y-2 mt-2">
@@ -585,7 +586,7 @@ export default function Calculator() {
                                 onClick={(e) => e.stopPropagation()}
                               />
                               <span className="text-xs text-slate-400">
-                                Phase {phase.phase}: {getLocalizedText(phase.name)}
+                                Phase {phase.phase}: {localizeText(phase.name)}
                               </span>
                             </div>
                           </div>
@@ -620,7 +621,7 @@ export default function Calculator() {
                                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
                               />
                               <span className="truncate">
-                                {getLocalizedText(getItemFromCache(mat.itemId)?.name) || mat.itemId}
+                                {localizeText(getItemFromCache(mat.itemId)?.name) || mat.itemId}
                               </span>
                             </span>
                           ) : (
@@ -639,11 +640,11 @@ export default function Calculator() {
                             <CommandEmpty>No item found.</CommandEmpty>
                             <CommandGroup>
                               {allItems
-                                .sort((a, b) => getLocalizedText(a.name).localeCompare(getLocalizedText(b.name)))
+                                .sort((a, b) => localizeText(a.name).localeCompare(localizeText(b.name)))
                                 .map((item) => (
                                   <CommandItem
                                     key={item.id}
-                                    value={`${item.id}-${getLocalizedText(item.name)}`}
+                                    value={`${item.id}-${localizeText(item.name)}`}
                                     onSelect={() => {
                                       setCustomMaterials(prev => 
                                         prev.map((m, i) => 
@@ -660,7 +661,7 @@ export default function Calculator() {
                                       className="w-8 h-8 object-cover rounded flex-shrink-0"
                                       onError={(e) => { e.currentTarget.style.display = 'none'; }}
                                     />
-                                    <span className="flex-1 truncate">{getLocalizedText(item.name)}</span>
+                                    <span className="flex-1 truncate">{localizeText(item.name)}</span>
                                     <Check
                                       className={cn(
                                         "h-4 w-4 flex-shrink-0",
@@ -774,7 +775,7 @@ export default function Calculator() {
                                         cursor-pointer hover:border-cyan-500/30 transition-colors w-16 h-16 flex-shrink-0
                                       `}>
                                         {item.imageFilename ? (
-                                          <img src={item.imageFilename} alt={getLocalizedText(item.name)} className="w-full h-full object-cover rounded-lg" />
+                                          <img src={item.imageFilename} alt={localizeText(item.name)} className="w-full h-full object-cover rounded-lg" />
                                         ) : (
                                           <span className="text-slate-600 text-2xl">?</span>
                                         )}
@@ -787,7 +788,7 @@ export default function Calculator() {
                                 </TooltipProvider>
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className="text-slate-300 font-medium truncate">{getLocalizedText(item?.name) || mat.itemId}</p>
+                                <p className="text-slate-300 font-medium truncate">{localizeText(item?.name) || mat.itemId}</p>
                                 <p className="text-xs text-slate-500">
                                   Have: <span className="text-cyan-400">{have}</span> / Need: <span className="text-slate-400 font-medium">{mat.quantity}</span>
                                 </p>

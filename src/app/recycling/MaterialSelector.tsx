@@ -18,7 +18,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import type { Item } from "@/lib/types";
-import { getLocalizedText } from "~/lib/utils";
+import { useLocalizedText } from "~/lib/utils";
 import { isTerminalMaterial } from "~/lib/utils/recycling-calculator";
 
 interface MaterialSelectorProps {
@@ -38,6 +38,7 @@ export function MaterialSelector({
   label = "Select Material",
   placeholder = "Search materials...",
 }: MaterialSelectorProps) {
+  const localizeText = useLocalizedText();
   const [open, setOpen] = useState(false);
 
   // Filter materials based on terminalOnly flag
@@ -71,11 +72,11 @@ export function MaterialSelector({
                 {selectedMaterial.imageFilename && (
                   <img
                     src={selectedMaterial.imageFilename}
-                    alt={getLocalizedText(selectedMaterial.name)}
+                    alt={localizeText(selectedMaterial.name)}
                     className="w-6 h-6 object-cover rounded"
                   />
                 )}
-                <span>{getLocalizedText(selectedMaterial.name)}</span>
+                <span>{localizeText(selectedMaterial.name)}</span>
               </div>
             ) : (
               <span className="text-slate-500">{placeholder}</span>
@@ -97,7 +98,7 @@ export function MaterialSelector({
                 {materials.map((material) => (
                   <CommandItem
                     key={material.id}
-                    value={`${material.id} ${getLocalizedText(material.name)}`}
+                    value={`${material.id} ${localizeText(material.name)}`}
                     onSelect={() => {
                       onSelectMaterial(material.id);
                       setOpen(false);
@@ -108,13 +109,13 @@ export function MaterialSelector({
                       {material.imageFilename && (
                         <img
                           src={material.imageFilename}
-                          alt={getLocalizedText(material.name)}
+                          alt={localizeText(material.name)}
                           className="w-8 h-8 object-cover rounded"
                         />
                       )}
                       <div className="flex-1">
                         <div className="font-medium text-slate-200">
-                          {getLocalizedText(material.name)}
+                          {localizeText(material.name)}
                         </div>
                         <div className="text-xs text-slate-400">
                           {material.type} • {material.rarity}

@@ -27,6 +27,7 @@ interface GameState {
   preferences: {
     questViewMode: 'cards' | 'flowchart';
     itemViewMode: 'grid' | 'list';
+    gameLanguage: 'en' | 'de' | 'fr' | 'es' | 'pt' | 'pl' | 'no' | 'da' | 'it' | 'ru' | 'ja' | 'zh-TW' | 'uk' | 'zh-CN' | 'kr' | 'tr' | 'hr' | 'sr';
   };
   setPreference: (key: keyof GameState['preferences'], value: any) => void;
   
@@ -136,7 +137,8 @@ export const useGameStore = create<GameState>()(
 
       preferences: {
         questViewMode: 'cards',
-        itemViewMode: 'grid'
+        itemViewMode: 'grid',
+        gameLanguage: 'en'
       },
       setPreference: (key, value) =>
         set((state) => ({

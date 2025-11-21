@@ -14,7 +14,7 @@ import { ItemTooltip } from "@/components/ui/item-tooltip";
 import { Search, Grid3x3, GitBranch, User, CheckCircle2, CircleHelp } from "lucide-react";
 import type { QuestWithRelations } from "@/lib/types";
 import { getAllQuests } from "~/server/db/queries/quests";
-import { getLocalizedText } from "~/lib/utils";
+import { useLocalizedText } from "~/lib/utils";
 import QuestFlowChart from "./QuestFlowChart";
 import QuestDetailModal from "./QuestDetailModal";
 import QuestCard from "./QuestCard";
@@ -22,6 +22,7 @@ import type { QuestWithStatus, QuestStatus } from "@/lib/types";
 
 
 export default function Quests() {
+  const localizeText = useLocalizedText(); 
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"cards" | "flowchart">("cards");
   const [activeTab, setActiveTab] = useState<"all" | "active" | "locked" | "completed">("active");
@@ -72,7 +73,7 @@ export default function Quests() {
 
   const filteredQuests = quests
     .filter(quest => {
-      const matchesSearch = getLocalizedText(quest.name).toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = localizeText(quest.name).toLowerCase().includes(searchQuery.toLowerCase()); // ✅ Use localizeText function
       const matchesTab = 
         activeTab === "all" || 
         (activeTab === "active" && quest.status === "active") ||

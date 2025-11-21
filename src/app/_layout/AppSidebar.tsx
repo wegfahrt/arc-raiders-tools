@@ -11,12 +11,18 @@ import {
   Recycle,
   Map, 
   BookOpen,
-  ChevronLeft,
-  ChevronRight
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { LanguageSettings } from "./LanguageSettings";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -32,9 +38,11 @@ const navItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
-    <aside 
+    <>
+      <aside 
       className={cn(
         "hidden fixed z-999 h-full lg:flex flex-col bg-slate-900/95 backdrop-blur-sm border-r border-cyan-500/20 transition-all duration-300 overflow-hidden",
         collapsed ? "w-20" : "w-64"
@@ -97,16 +105,32 @@ export function AppSidebar() {
         })}
       </nav>
 
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="p-4 border-t border-cyan-500/20 hover:bg-cyan-500/10 transition-colors flex items-center justify-center"
-      >
-        {collapsed ? (
-          <ChevronRight className="text-cyan-400" size={20} />
-        ) : (
-          <ChevronLeft className="text-cyan-400" size={20} />
-        )}
-      </button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className={cn(
+                "p-4 border-t border-cyan-500/20 hover:bg-cyan-500/10 transition-colors flex items-center gap-3",
+                collapsed ? "justify-center" : "justify-start"
+              )}
+            >
+              <Settings className="text-cyan-400 flex-shrink-0" size={20} />
+              {!collapsed && (
+                <span className="text-cyan-300 font-medium">Settings</span>
+              )}
+            </button>
+          </TooltipTrigger>
+          {collapsed && (
+            <TooltipContent side="right" className="bg-slate-800 border-cyan-500/30">
+              <p>Settings</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
     </aside>
+
+    <LanguageSettings open={settingsOpen} onOpenChange={setSettingsOpen} />
+    </>
   );
 }
